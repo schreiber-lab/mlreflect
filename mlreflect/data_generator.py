@@ -2,7 +2,7 @@ import h5py
 import numpy as np
 from tqdm import tqdm
 
-import mlreflect.reflectivity as refl
+from mlreflect import multilayer_reflectivity as refl
 
 
 class TrainingData:
@@ -112,8 +112,8 @@ class TrainingData:
         noisy_q_values = self._make_noisy_q_values(q_values_si, number_of_curves)
 
         for curve in tqdm(range(number_of_curves)):
-            reflectivity = refl.multilayer_reflectivity(noisy_q_values[curve, :], thicknesses_si[curve, :],
-                                                        roughnesses_si[curve, :], slds_si[curve, :], ambient_sld_si)
+            reflectivity = refl(noisy_q_values[curve, :], thicknesses_si[curve, :], roughnesses_si[curve, :],
+                                slds_si[curve, :], ambient_sld_si)
 
             reflectivity_noisy = self._apply_shot_noise(reflectivity)
             reflectivity_noisy = self._apply_background_noise(reflectivity_noisy)
