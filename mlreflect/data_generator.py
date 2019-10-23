@@ -6,6 +6,7 @@ from numpy import ndarray
 from tqdm import tqdm
 
 from mlreflect import multilayer_reflectivity as refl
+from mlreflect.performance_tools import timer
 
 
 class TrainingData:
