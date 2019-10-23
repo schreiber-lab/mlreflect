@@ -52,7 +52,7 @@ class TrainingData:
         self._number_of_layers = len(self.thickness)
 
         if num_train < 1 or num_val < 1:
-            raise ValueError('Number of training and validation curves must be at least 1')
+            raise ValueError('Number of training and validation curves must be at least 1.')
 
         self.number_of_training_curves = num_train
         self.number_of_validation_curves = num_val
