@@ -8,7 +8,7 @@ Jobfunc = Callable[[Iterable[float]], Iterable[float]]
 
 
 class InputPreprocessor:
-    """Class that stores a list of preprocessing'jobs' that can be executed on reflectivity input data.
+    """Class that stores a list of preprocessing functions ('jobs') that can be executed on reflectivity input data.
 
     Args: None
 
