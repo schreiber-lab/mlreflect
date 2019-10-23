@@ -177,8 +177,11 @@ class TrainingData:
             limits_layer = limits[layer_index]
 
             if np.all(np.isreal(limits_layer)):
-                randomized_labels[:, layer_index] = self._bolstered_uniform_distribution(*limits_layer,
-                                                                                         number_of_values)
+                if number_of_values > 10:
+                    randomized_labels[:, layer_index] = self._bolstered_uniform_distribution(*limits_layer,
+                                                                                             number_of_values)
+                else:
+                    randomized_labels[:, layer_index] = np.random.uniform(*limits_layer, number_of_values)
             else:
                 real_randomized_labels = self._generate_random_values(limits_layer[0].real, number_of_values)
                 imag_randomized_labels = self._generate_random_values(limits_layer[1].imag, number_of_values)
