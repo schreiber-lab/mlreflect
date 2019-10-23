@@ -31,15 +31,7 @@ class TrainingData:
         random_seed: Random seed for numpy.random.seed which affects the generation of the random labels.
 
     Methods:
-        generate_data(): Generates labels and simulates reflectivity curves according to the set parameters and stores
-            them in:
-            `self.training_labels`
-            `self.training_reflectivity`
-            `self.validation_labels`
-            `self.validation_reflectivity`
-            `self.test_labels`
-            `self.test_reflectivity`
-        save_data_as_h5(file_name): Saves the generated data plus additional information in the .5h file `file_name`.
+        generate_data()
 
     Returns:
         TrainingData object.
@@ -81,14 +73,16 @@ class TrainingData:
         self.background_noise_spread = 0
         self.slit_width = 0
 
+    @timer
     def generate_data(self):
-        """Generates labels and simulates reflectivity curves according to the set parameters and stores them in:
-            `self.training_labels`
-            `self.training_reflectivity`
-            `self.validation_labels`
-            `self.validation_reflectivity`
-            `self.test_labels`
-            `self.test_reflectivity`"""
+        """Generates labels and simulates reflectivity curves according to the given parameters and stores them in:
+            `training_labels`
+            `training_reflectivity`
+            `validation_labels`
+            `validation_reflectivity`
+            `test_labels`
+            `test_reflectivity`"""
+
         self.training_labels = self._generate_labels(self.number_of_training_curves)
         self.training_reflectivity = self._generate_reflectivity_curves(self.training_labels,
                                                                         self.number_of_training_curves)
