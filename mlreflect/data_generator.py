@@ -235,7 +235,8 @@ class TrainingData:
 
     @staticmethod
     def _thickness_correlation(thickness: float):
-        return thickness / 2
+        roughness = thickness / 2
+        return roughness
 
     def save_data_as_h5(self, file_name: str):
         """Saves the generated data plus additional information in the .5h file `file_name`."""
