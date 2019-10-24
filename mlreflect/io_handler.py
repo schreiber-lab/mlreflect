@@ -21,7 +21,7 @@ class InputPreprocessor:
     Methods:
         append_to_job_list()
         reset_list()
-        preprocess_data()
+        apply_preprocessing()
         log()
         standardize()
         reset_standardization()
@@ -59,7 +59,7 @@ class InputPreprocessor:
         """Removes all current functions from the job list."""
         self._job_list = []
 
-    def preprocess_data(self, data: ndarray) -> ndarray:
+    def apply_preprocessing(self, data: ndarray) -> ndarray:
         """Executes all functions on the job list. Subsequent functions take the previous return value as argument.
 
         Args:
