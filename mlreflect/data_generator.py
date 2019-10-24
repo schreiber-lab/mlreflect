@@ -1,4 +1,4 @@
-from typing import Tuple, List
+from typing import Tuple, Iterable
 
 import h5py
 import numpy as np
@@ -38,9 +38,9 @@ class ReflectivityGenerator:
         TrainingData object.
     """
 
-    def __init__(self, q_values: ndarray, thickness_limits: List[Tuple[float, float]], roughness_limits: List[Tuple[
-        float, float]], sld_limits: List[Tuple[float, float]], ambient_sld: float, num_train: int, num_val: int,
-                 num_test: int, random_seed: int = 1):
+    def __init__(self, q_values: ndarray, thickness_limits: Iterable[Tuple[float, float]],
+                 roughness_limits: Iterable[Tuple[float, float]], sld_limits: Iterable[Tuple[float, float]],
+                 ambient_sld: float, num_train: int, num_val: int, num_test: int, random_seed: int = 1):
 
         np.random.seed(random_seed)
         self.q_values = np.asarray(q_values)
@@ -95,7 +95,7 @@ class ReflectivityGenerator:
         self.test_labels = self._generate_labels(self.number_of_test_curves)
         self.test_reflectivity = self._generate_reflectivity_curves(self.test_labels, self.number_of_test_curves)
 
-    def _generate_reflectivity_curves(self, labels: ndarray, number_of_curves: int):
+    def _generate_reflectivity_curves(self, labels: ndarray, number_of_curves: int) -> ndarray:
         thicknesses = labels[:, :self._number_of_layers]
         roughnesses = labels[:, self._number_of_layers:2 * self._number_of_layers]
         slds = labels[:, 2 * self._number_of_layers:3 * self._number_of_layers]
@@ -124,24 +124,24 @@ class ReflectivityGenerator:
 
         return reflectivity_curves
 
-    def _make_noisy_q_values(self, q_values: ndarray, number_of_curves: int):
+    def _make_noisy_q_values(self, q_values: ndarray, number_of_curves: int) -> ndarray:
         percentage_deviation = np.random.normal(1, self.q_noise_spread, (number_of_curves, len(q_values)))
         return q_values * percentage_deviation
 
-    def _apply_shot_noise(self, reflectivity_curve: ndarray):
+    def _apply_shot_noise(self, reflectivity_curve: ndarray) -> ndarray:
         noisy_reflectivity = np.clip(np.random.normal(reflectivity_curve, self.shot_noise_spread * np.sqrt(
             reflectivity_curve)), 1e-8, None)
 
         return noisy_reflectivity
 
-    def _apply_background_noise(self, reflectivity_curve: ndarray):
+    def _apply_background_noise(self, reflectivity_curve: ndarray) -> ndarray:
         num_q_values = len(reflectivity_curve)
         background = np.random.normal(self.background_noise_base_level, self.background_noise_spread, num_q_values)
 
         return reflectivity_curve + background
 
     # TODO This method is not yet finished and should only be used with slit_width = 0.
-    def _apply_slit_convolution(self, q_values: ndarray, reflectivity_curve: ndarray):
+    def _apply_slit_convolution(self, q_values: ndarray, reflectivity_curve: ndarray) -> ndarray:
         sigma = self.slit_width
         if sigma == 0:
             return reflectivity_curve
@@ -158,7 +158,7 @@ class ReflectivityGenerator:
         return conv_reflectivity
 
     @staticmethod
-    def _gauss(x, sigma: float = 1.0, mu: float = 0.0):
+    def _gauss(x: ndarray, sigma: float = 1.0, mu: float = 0.0) -> ndarray:
         g = 1 / (2 * np.pi * sigma ** 2) * np.exp(-(x - mu) ** 2 / (2 * sigma ** 2))
         return g
 
@@ -171,7 +171,7 @@ class ReflectivityGenerator:
 
         return labels
 
-    def _generate_random_values(self, limits, number_of_values: int):
+    def _generate_random_values(self, limits: Iterable[Tuple[float, float]], number_of_values: int) -> ndarray:
         randomized_labels = np.zeros((number_of_values, self._number_of_layers))
         for layer_index in range(self._number_of_layers):
             limits_layer = limits[layer_index]
@@ -189,7 +189,7 @@ class ReflectivityGenerator:
 
         return randomized_labels
 
-    def _bolstered_uniform_distribution(self, value_min: float, value_max: float, n_samples: int):
+    def _bolstered_uniform_distribution(self, value_min: float, value_max: float, n_samples: int) -> ndarray:
         span = value_max - value_min
 
         n_bolster = int(np.ceil(n_samples * self.bolster_fraction / 2))
@@ -208,7 +208,7 @@ class ReflectivityGenerator:
         return total_distribution
 
     @staticmethod
-    def _fold_distribution(values: ndarray, min_value: float, max_value: float):
+    def _fold_distribution(values: ndarray, min_value: float, max_value: float) -> ndarray:
         num_values = len(values)
         for i in range(num_values):
             if values[i] < min_value:
@@ -217,7 +217,7 @@ class ReflectivityGenerator:
                 values[i] += 2 * (max_value - values[i])
         return values
 
-    def _generate_random_roughness_from_thickness(self, randomized_thicknesses: ndarray):
+    def _generate_random_roughness_from_thickness(self, randomized_thicknesses: ndarray) -> ndarray:
         randomized_roughnesses = np.zeros_like(randomized_thicknesses)
         number_of_samples = randomized_thicknesses.shape[0]
 
@@ -238,7 +238,7 @@ class ReflectivityGenerator:
         return randomized_roughnesses
 
     @staticmethod
-    def _thickness_correlation(thickness: float):
+    def _thickness_correlation(thickness: float) -> float:
         roughness = thickness / 2
         return roughness
 
