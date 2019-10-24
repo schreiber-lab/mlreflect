@@ -2,7 +2,9 @@ from typing import Iterable, Callable, Union, List, Tuple
 from warnings import warn
 
 import numpy as np
+import pandas as pd
 from numpy import ndarray
+from pandas import DataFrame
 
 Jobfunc = Callable[[Iterable[float]], Iterable[float]]
 
@@ -127,8 +129,8 @@ class OutputPreprocessor:
         restore_labels()
     """
 
-    def __init__(self, thickness_limits: Iterable[Tuple[float]], roughness_limits: Iterable[Tuple[float]],
-                 sld_limits: Iterable[Tuple[float]]):
+    def __init__(self, thickness_limits: List[Tuple[float, float]], roughness_limits: List[Tuple[float, float]],
+                 sld_limits: List[Tuple[float, float]]):
 
         self._thickness_limits = np.asarray(thickness_limits)
         self._roughness_limits = np.asarray(roughness_limits)
@@ -139,11 +141,11 @@ class OutputPreprocessor:
         self._labels_min = self._label_limits[:, 0]
         self._labels_max = self._label_limits[:, 1]
 
-        self.label_names = ['' for i in range(self._number_of_labels)]
-        self.normalized_label_names = []
-
         self._number_of_layers = len(self._thickness_limits)
         self._number_of_labels = len(self._label_limits)
+
+        self.label_names = ['' for i in range(self._number_of_labels)]
+        self.normalized_label_names = []
 
         for layer_index in range(self._number_of_layers):
             self.label_names[layer_index] = f'layer{self._number_of_layers - layer_index}_thickness'
@@ -152,24 +154,25 @@ class OutputPreprocessor:
             self.label_names[
                 layer_index + 2 * self._number_of_layers] = f'layer{self._number_of_layers - layer_index}_sld'
 
+        self._label_limits_dict = {}
+        for label_index in range(self._number_of_labels):
+            self._label_limits_dict[self.label_names[label_index]] = self._label_limits[label_index, :]
+
         self.removed_label_names = []
+        self.constant_label_names = []
 
         for name in self.label_names:
             label_min = self._label_limits_dict[name][0]
             label_max = self._label_limits_dict[name][1]
             if label_min == label_max:
-                self.removed_label_names += name
-
-        self._label_limits_dict = {}
-        for label_index in range(self._number_of_labels):
-            self._label_limits_dict[self.label_names[label_index]] = self._label_limits[label_index, :]
+                self.constant_label_names += [name]
 
     def apply_preprocessing(self, labels: ndarray) -> ndarray:
         """Returns `labels` after normalizing and removing all labels defined in `removed_label_names`."""
-        label_dict = self._make_label_dict(labels)
-        label_dict = self._remove_labels(label_dict)
-        label_dict = self._normalize_labels(label_dict)
-        preprocessed_labels = self._unpack_label_dict(label_dict)
+        label_df = pd.DataFrame(data=labels, columns=self.label_names)
+        label_df = self._remove_labels(label_df)
+        label_df = self._normalize_labels(label_df)
+        preprocessed_labels = np.array(label_df)
 
         return preprocessed_labels
 
@@ -190,67 +193,54 @@ class OutputPreprocessor:
             else:
                 self.removed_label_names.append(entry)
 
-    def _make_label_dict(self, labels: ndarray) -> dict:
-        """Takes an ndarray of labels and returns a dictionary with a key-value pair for each label."""
-        label_dict = {}
-        for label_index in range(self._number_of_labels):
-            label_dict[self.label_names[label_index]] = labels[:, label_index]
-
-        return label_dict
-
-    def _unpack_label_dict(self, label_dict: dict) -> ndarray:
-        """Takes a dictionary with key-value pairs of labels and returns an ndarray of labels."""
-        num_labels = len(label_dict.keys())
-        num_samples = len(list(label_dict.values())[0])
-
-        labels = np.zeros((num_samples, num_labels))
-
-        label_names = self.label_names.copy()
-
-        for name in self.removed_label_names:
-            label_names.remove(name)
-
-        for index, name in enumerate(label_names):
-            labels[:, index] = label_dict[name]
-
-        return labels
-
-    def _normalize_labels(self, label_dict: dict) -> dict:
+    def _normalize_labels(self, label_df: DataFrame) -> DataFrame:
         """Normalizes all labels contained in `normalized_label_names` by their minimum and maximum values."""
-        self.normalized_label_names = label_dict.keys()
 
-        for name in self.normalized_label_names:
+        for name in label_df.columns:
             label_min = self._label_limits_dict[name][0]
             label_max = self._label_limits_dict[name][1]
             if label_max != label_min:
-                label_dict[name] = (label_dict[name] - label_min) / (label_max - label_min)
+                label_df[name] = (label_df[name] - label_min) / (label_max - label_min)
 
-        return label_dict
+        self.normalized_label_names = list(label_df.columns)
 
-    def _remove_labels(self, label_dict: dict, ) -> dict:
-        """Removes all labels that are contained in `removed_label_names` from `label_dict` and returns new dict."""
-        for name in self.removed_label_names:
-            if name not in label_dict.keys():
+        return label_df
+
+    def _remove_labels(self, label_df: DataFrame, ) -> DataFrame:
+        """Removes labels in `removed_label_names` and `constant_label_names` from `label_df` and returns DataFrame."""
+
+        removal_list = self.removed_label_names + self.constant_label_names
+        for name in removal_list:
+            if name not in label_df.columns:
                 warn(f'Label "{name}" not in the list of labels (maybe already removed). Skipping "{name}".')
             else:
-                del label_dict[name]
+                del label_df[name]
 
-        return label_dict
+        return label_df
 
     def restore_labels(self, predicted_labels: ndarray, training_labels: ndarray) -> ndarray:
         """Takes the predicted labels, reverts normalization and adds removed labels and returns those as ndarray."""
-        predicted_labels_dict = self._make_label_dict(predicted_labels)
-        training_labels_dict = self._make_label_dict(training_labels)
 
-        restored_labels_dict = self._renormalize_labels(predicted_labels_dict)
-        restored_labels_dict = self._add_removed_labels(restored_labels_dict, training_labels_dict)
+        predicted_label_names = self.label_names.copy()
+        removed_list = self.constant_label_names + self.removed_label_names
+        for name in removed_list:
+            predicted_label_names.remove(name)
 
-        restored_labels = self._unpack_label_dict(restored_labels_dict)
+        predicted_labels_df = pd.DataFrame(data=predicted_labels, columns=predicted_label_names)
+        training_labels_df = pd.DataFrame(data=training_labels, columns=self.label_names)
+
+        restored_labels_df = self._renormalize_labels(predicted_labels_df)
+        restored_labels_df = self._add_removed_labels(restored_labels_df, training_labels_df)
+
+        print(restored_labels_df)
+
+        reordered_labels_df = restored_labels_df[self.label_names]
+        restored_labels = np.array(reordered_labels_df)
 
         return restored_labels
 
-    def _renormalize_labels(self, label_dict: dict) -> dict:
-        """Removes min-max normalization from all labels in `label_dict` which are `normalized_label_names`."""
+    def _renormalize_labels(self, label_df: DataFrame) -> DataFrame:
+        """Removes min-max normalization from all labels in `label_df` which are `normalized_label_names`."""
         if not self.normalized_label_names:
             raise ValueError('No normalized labels. `_normalize_labels` must be called first.')
 
@@ -258,13 +248,14 @@ class OutputPreprocessor:
             label_min = self._label_limits_dict[name][0]
             label_max = self._label_limits_dict[name][1]
             if label_max != label_min:
-                label_dict[name] = label_dict[name] * (label_max - label_min) + label_min
+                label_df[name] = label_df[name] * (label_max - label_min) + label_min
 
-        return label_dict
+        return label_df
 
-    def _add_removed_labels(self, predicted_labels_dict: dict, training_labels_dict: dict) -> dict:
-        """Adds all labels in `removed_label_names` from `training_labels_dict` to `predicted_labels_dict`."""
-        for name in self.removed_label_names:
-            predicted_labels_dict[name] = training_labels_dict[name]
+    def _add_removed_labels(self, predicted_labels_df: DataFrame, training_labels_df: DataFrame) -> DataFrame:
+        """Adds all labels in `removed_label_names` from `training_labels_df` to `predicted_labels_df`."""
+        removal_list = self.constant_label_names + self.removed_label_names
+        for name in removal_list:
+            predicted_labels_df[name] = training_labels_df[name]
 
-        return predicted_labels_dict
+        return predicted_labels_df
