@@ -183,8 +183,10 @@ class ReflectivityGenerator:
                 else:
                     randomized_labels[:, layer_index] = np.random.uniform(*limits_layer, number_of_values)
             else:
-                real_randomized_labels = self._generate_random_values(limits_layer[0].real, number_of_values)
-                imag_randomized_labels = self._generate_random_values(limits_layer[1].imag, number_of_values)
+                real_randomized_labels = self._generate_random_values([(limits_layer[0].real, limits_layer[1].real)],
+                                                                      number_of_values)
+                imag_randomized_labels = self._generate_random_values([(limits_layer[0].imag, limits_layer[1].imag)],
+                                                                      number_of_values)
                 randomized_labels[:, layer_index] = real_randomized_labels + 1j * imag_randomized_labels
 
         return randomized_labels
