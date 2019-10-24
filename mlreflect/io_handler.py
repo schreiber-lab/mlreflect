@@ -162,7 +162,7 @@ class OutputPreprocessor:
                 self.constant_label_names += [name]
 
     def apply_preprocessing(self, labels: Union[DataFrame, ndarray]) -> DataFrame:
-        """Returns `labels` after normalizing and removing all labels defined in `removed_label_names`."""
+        """Returns `labels` after normalizing and removing all labels defined in `removed_label_names` as DataFrame."""
         label_df = convert_to_dataframe(labels, self.label_names)
 
         label_df = self._remove_labels(label_df)
