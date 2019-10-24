@@ -2,11 +2,14 @@ from typing import Tuple, Iterable
 
 import h5py
 import numpy as np
+import pandas as pd
 from numpy import ndarray
+from pandas import DataFrame
 from tqdm import tqdm
 
 from mlreflect import multilayer_reflectivity as refl
 from mlreflect.performance_tools import timer
+from mlreflect.label_names import make_label_names
 
 
 class ReflectivityGenerator:
@@ -50,9 +53,12 @@ class ReflectivityGenerator:
         self.ambient_sld = ambient_sld
 
         self._number_of_layers = len(self.thickness)
+        self._number_of_labels = self._number_of_layers * 3
 
         if num_train < 1 or num_val < 1:
             raise ValueError('Number of training and validation curves must be at least 1.')
+
+        self.label_names = make_label_names(self._number_of_layers)
 
         self.number_of_training_curves = num_train
         self.number_of_validation_curves = num_val
@@ -85,15 +91,16 @@ class ReflectivityGenerator:
             `test_reflectivity`"""
 
         self.training_labels = self._generate_labels(self.number_of_training_curves)
-        self.training_reflectivity = self._generate_reflectivity_curves(self.training_labels,
+        self.training_reflectivity = self._generate_reflectivity_curves(np.array(self.training_labels),
                                                                         self.number_of_training_curves)
 
         self.validation_labels = self._generate_labels(self.number_of_validation_curves)
-        self.validation_reflectivity = self._generate_reflectivity_curves(self.validation_labels,
+        self.validation_reflectivity = self._generate_reflectivity_curves(np.array(self.validation_labels),
                                                                           self.number_of_validation_curves)
 
         self.test_labels = self._generate_labels(self.number_of_test_curves)
-        self.test_reflectivity = self._generate_reflectivity_curves(self.test_labels, self.number_of_test_curves)
+        self.test_reflectivity = self._generate_reflectivity_curves(np.array(self.test_labels),
+                                                                    self.number_of_test_curves)
 
     def _generate_reflectivity_curves(self, labels: ndarray, number_of_curves: int) -> ndarray:
         thicknesses = labels[:, :self._number_of_layers]
@@ -162,12 +169,13 @@ class ReflectivityGenerator:
         g = 1 / (2 * np.pi * sigma ** 2) * np.exp(-(x - mu) ** 2 / (2 * sigma ** 2))
         return g
 
-    def _generate_labels(self, number_of_samples: int):
+    def _generate_labels(self, number_of_samples: int) -> DataFrame:
         randomized_slds = self._generate_random_values(self.sld, number_of_samples)
         randomized_thicknesses = self._generate_random_values(self.thickness, number_of_samples)
         randomized_roughnesses = self._generate_random_roughness_from_thickness(randomized_thicknesses)
 
         labels = np.concatenate((randomized_thicknesses, randomized_roughnesses, randomized_slds), axis=1)
+        labels = pd.DataFrame(data=labels, columns=self.label_names)
 
         return labels
 
@@ -268,12 +276,13 @@ class ReflectivityGenerator:
 
             training = data_file.create_group('training')
             training.create_dataset('reflectivity', data=self.training_reflectivity)
-            training.create_dataset('labels', data=self.training_labels)
 
             validation = data_file.create_group('validation')
             validation.create_dataset('reflectivity', data=self.validation_reflectivity)
-            validation.create_dataset('labels', data=self.validation_labels)
 
             test = data_file.create_group('test')
             test.create_dataset('reflectivity', data=self.test_reflectivity)
-            test.create_dataset('labels', data=self.test_labels)
+
+        self.training_labels.to_hdf(file_name, 'training/labels')
+        self.validation_labels.to_hdf(file_name, 'validation/labels')
+        self.test_labels.to_hdf(file_name, 'test/labels')

@@ -167,7 +167,8 @@ class OutputPreprocessor:
 
         label_df = self._remove_labels(label_df)
         label_df = self._normalize_labels(label_df)
-        preprocessed_labels = np.array(label_df)
+
+        preprocessed_labels = label_df
 
         return preprocessed_labels
 
@@ -215,6 +216,7 @@ class OutputPreprocessor:
 
     def restore_labels(self, predicted_labels: Union[DataFrame, ndarray],
                        training_labels: Union[ndarray, DataFrame]) -> DataFrame:
+        """Takes the predicted labels, reverts normalization and adds removed labels and returns those as DataFrame."""
 
         predicted_label_names = self.label_names.copy()
         removed_list = self.constant_label_names + self.removed_label_names
@@ -230,9 +232,8 @@ class OutputPreprocessor:
         print(restored_labels_df)
 
         reordered_labels_df = restored_labels_df[self.label_names]
-        restored_labels = np.array(reordered_labels_df)
 
-        return restored_labels
+        return reordered_labels_df
 
     def _renormalize_labels(self, label_df: DataFrame) -> DataFrame:
         """Removes min-max normalization from all labels in `label_df` which are `normalized_label_names`."""
