@@ -8,8 +8,8 @@ from pandas import DataFrame
 from tqdm import tqdm
 
 from mlreflect import multilayer_reflectivity as refl
-from mlreflect.performance_tools import timer
 from mlreflect.label_names import make_label_names
+from mlreflect.performance_tools import timer
 
 
 class ReflectivityGenerator:

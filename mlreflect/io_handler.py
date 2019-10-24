@@ -2,7 +2,6 @@ from typing import Iterable, Callable, Union, List, Tuple
 from warnings import warn
 
 import numpy as np
-import pandas as pd
 from numpy import ndarray
 from pandas import DataFrame
 
