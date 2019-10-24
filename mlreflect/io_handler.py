@@ -107,13 +107,13 @@ class OutputPreprocessor:
     """Class for preprocessing reflectivity labels for training and validation.
 
     Args:
-        thickness_limits: An array-like object (list, tuple, ndarray, etc.) that contains a tuple with the min and max
+        thickness_ranges: An array-like object (list, tuple, ndarray, etc.) that contains a tuple with the min and max
             thickness in units of Å for each sample layer in order from top to bottom. The thickness of the bottom most
             layer (substrate) is not relevant for the simulation, but some value must be provided, e.g. (1, 1).
-        roughness_limits: An array-like object (list, tuple, ndarray, etc.) that contains a tuple with the min and max
+        roughness_ranges: An array-like object (list, tuple, ndarray, etc.) that contains a tuple with the min and max
             roughness in units of Å for each sample interface in order from top (ambient/top layer) to bottom (bottom
             layer/substrate).
-        sld_limits: An array-like object (list, tuple, ndarray, etc.) that contains a tuple with the min and max
+        sld_ranges: An array-like object (list, tuple, ndarray, etc.) that contains a tuple with the min and max
             scattering length density (SLD) in units of 1e+14 1/Å^2 for each sample layer in order from top to bottom
             (excluding the ambient SLD).
 
@@ -130,33 +130,33 @@ class OutputPreprocessor:
         restore_labels()
     """
 
-    def __init__(self, thickness_limits: List[Tuple[float, float]], roughness_limits: List[Tuple[float, float]],
-                 sld_limits: List[Tuple[float, float]]):
+    def __init__(self, thickness_ranges: List[Tuple[float, float]], roughness_ranges: List[Tuple[float, float]],
+                 sld_ranges: List[Tuple[float, float]]):
 
-        self._thickness_limits = np.asarray(thickness_limits)
-        self._roughness_limits = np.asarray(roughness_limits)
-        self._sld_limits = np.asarray(sld_limits)
+        self._thickness_ranges = np.asarray(thickness_ranges)
+        self._roughness_ranges = np.asarray(roughness_ranges)
+        self.ranges = np.asarray(sld_ranges)
 
-        self._label_limits = np.concatenate((self._thickness_limits, self._roughness_limits, self._sld_limits), axis=0)
+        self._label_ranges = np.concatenate((self._thickness_ranges, self._roughness_ranges, self.ranges), axis=0)
 
-        self._labels_min = self._label_limits[:, 0]
-        self._labels_max = self._label_limits[:, 1]
+        self._labels_min = self._label_ranges[:, 0]
+        self._labels_max = self._label_ranges[:, 1]
 
-        self._number_of_layers = len(self._thickness_limits)
-        self._number_of_labels = len(self._label_limits)
+        self._number_of_layers = len(self._thickness_ranges)
+        self._number_of_labels = len(self._label_ranges)
 
         self.label_names = make_label_names(self._number_of_layers)
         self.normalized_label_names = []
         self.removed_label_names = []
         self.constant_label_names = []
 
-        self._label_limits_dict = {}
+        self._label_ranges_dict = {}
         for label_index in range(self._number_of_labels):
-            self._label_limits_dict[self.label_names[label_index]] = self._label_limits[label_index, :]
+            self._label_ranges_dict[self.label_names[label_index]] = self._label_ranges[label_index, :]
 
         for name in self.label_names:
-            label_min = self._label_limits_dict[name][0]
-            label_max = self._label_limits_dict[name][1]
+            label_min = self._label_ranges_dict[name][0]
+            label_max = self._label_ranges_dict[name][1]
             if label_min == label_max:
                 self.constant_label_names += [name]
 
@@ -192,8 +192,8 @@ class OutputPreprocessor:
         """Normalizes all labels contained in `normalized_label_names` by their minimum and maximum values."""
 
         for name in label_df.columns:
-            label_min = self._label_limits_dict[name][0]
-            label_max = self._label_limits_dict[name][1]
+            label_min = self._label_ranges_dict[name][0]
+            label_max = self._label_ranges_dict[name][1]
             if label_max != label_min:
                 label_df[name] = (label_df[name] - label_min) / (label_max - label_min)
 
@@ -240,8 +240,8 @@ class OutputPreprocessor:
             raise ValueError('No normalized labels. `_normalize_labels` must be called first.')
 
         for name in self.normalized_label_names:
-            label_min = self._label_limits_dict[name][0]
-            label_max = self._label_limits_dict[name][1]
+            label_min = self._label_ranges_dict[name][0]
+            label_max = self._label_ranges_dict[name][1]
             if name not in self.constant_label_names:
                 label_df[name] = label_df[name] * (label_max - label_min) + label_min
 

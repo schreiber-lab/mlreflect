@@ -18,51 +18,35 @@ class ReflectivityGenerator:
     Args:
         q_values: An array-like object (list, tuple, ndarray, etc.) that contains the q-values in units of
             1/Å at which the reflected intensity will be simulated.
-        thickness_limits: An array-like object (list, tuple, ndarray, etc.) that contains a tuple with the min and max
-            thickness in units of Å for each sample layer in order from top to bottom. The thickness of the bottom most
-            layer (substrate) is not relevant for the simulation, but some value must be provided, e.g. (1, 1).
-        roughness_limits: An array-like object (list, tuple, ndarray, etc.) that contains a tuple with the min and max
-            roughness in units of Å for each sample interface in order from top (ambient/top layer) to bottom (bottom
-            layer/substrate).
-        sld_limits: An array-like object (list, tuple, ndarray, etc.) that contains a tuple with the min and max
-            scattering length density (SLD) in units of 1e+14 1/Å^2 for each sample layer in order from top to bottom
-            (excluding the ambient SLD).
         ambient_sld: Scattering length density of the ambient environment above the top most layer in units of 1e+14
             1/Å^2, e.g. ~0 for air.
-        num_train: Number of training curves that will be simulated.
-        num_val: Number of validation curves that will be simulated.
-        num_test: Number of test curves that will be simulated.
         random_seed: Random seed for numpy.random.seed which affects the generation of the random labels.
 
     Methods:
-        generate_data()
+        generate_random_data()
 
     Returns:
         TrainingData object.
     """
 
-    def __init__(self, q_values: ndarray, thickness_limits: Iterable[Tuple[float, float]],
-                 roughness_limits: Iterable[Tuple[float, float]], sld_limits: Iterable[Tuple[float, float]],
-                 ambient_sld: float, num_train: int, num_val: int, num_test: int, random_seed: int = 1):
+    def __init__(self, q_values: ndarray, ambient_sld: float, random_seed: int = 1):
 
         np.random.seed(random_seed)
         self.q_values = np.asarray(q_values)
-        self.thickness = np.asarray(thickness_limits)
-        self.roughness = np.asarray(roughness_limits)
-        self.sld = np.asarray(sld_limits)
         self.ambient_sld = ambient_sld
 
-        self._number_of_layers = len(self.thickness)
-        self._number_of_labels = self._number_of_layers * 3
+        self.number_of_training_curves = None
+        self.number_of_validation_curves = None
+        self.number_of_test_curves = None
 
-        if num_train < 1 or num_val < 1:
-            raise ValueError('Number of training and validation curves must be at least 1.')
+        self.thickness_ranges = None
+        self.roughness_ranges = None
+        self.sld_ranges = None
 
-        self.label_names = make_label_names(self._number_of_layers)
-
-        self.number_of_training_curves = num_train
-        self.number_of_validation_curves = num_val
-        self.number_of_test_curves = num_test
+        self._number_of_layers = None
+        self._number_of_labels = None
+        
+        self.label_names = []
 
         self.training_labels = None
         self.training_reflectivity = None
@@ -81,28 +65,64 @@ class ReflectivityGenerator:
         self.slit_width = 0
 
     @timer
-    def generate_data(self):
+    def generate_random_data(self, thickness_ranges: Iterable[Tuple[float, float]],
+                             roughness_ranges: Iterable[Tuple[float, float]], sld_ranges: Iterable[Tuple[float, float]],
+                             num_train: int, num_val: int, num_test: int):
         """Generates labels and simulates reflectivity curves according to the given parameters and stores them in:
             `training_labels`
             `training_reflectivity`
             `validation_labels`
             `validation_reflectivity`
             `test_labels`
-            `test_reflectivity`"""
+            `test_reflectivity`
+
+        Args:
+            thickness_ranges: An array-like object (list, tuple, ndarray, etc.) that contains a tuple with the min and max
+                thickness in units of Å for each sample layer in order from top to bottom. The thickness of the bottom most
+                layer (substrate) is not relevant for the simulation, but some value must be provided, e.g. (1, 1).
+            roughness_ranges: An array-like object (list, tuple, ndarray, etc.) that contains a tuple with the min and max
+                roughness in units of Å for each sample interface in order from top (ambient/top layer) to bottom (bottom
+                layer/substrate).
+            sld_ranges: An array-like object (list, tuple, ndarray, etc.) that contains a tuple with the min and max
+                scattering length density (SLD) in units of 1e+14 1/Å^2 for each sample layer in order from top to bottom
+                (excluding the ambient SLD).
+            num_train: Number of training curves that will be simulated.
+            num_val: Number of validation curves that will be simulated.
+            num_test: Number of test curves that will be simulated.
+
+        Returns:
+            None
+        """
+
+        self.thickness_ranges = np.asarray(thickness_ranges)
+        self.roughness_ranges = np.asarray(roughness_ranges)
+        self.sld_ranges = np.asarray(sld_ranges)
+
+        self._number_of_layers = len(self.thickness_ranges)
+        self._number_of_labels = self._number_of_layers * 3
+
+        if num_train < 1 or num_val < 1:
+            raise ValueError('Number of training and validation curves must be at least 1.')
+
+        self.label_names = make_label_names(self._number_of_layers)
+
+        self.number_of_training_curves = num_train
+        self.number_of_validation_curves = num_val
+        self.number_of_test_curves = num_test
 
         self.training_labels = self._generate_labels(self.number_of_training_curves)
-        self.training_reflectivity = self._generate_reflectivity_curves(np.array(self.training_labels),
-                                                                        self.number_of_training_curves)
+        self.training_reflectivity = self._generate_reflectivity_from_labels(np.array(self.training_labels),
+                                                                             self.number_of_training_curves)
 
         self.validation_labels = self._generate_labels(self.number_of_validation_curves)
-        self.validation_reflectivity = self._generate_reflectivity_curves(np.array(self.validation_labels),
-                                                                          self.number_of_validation_curves)
+        self.validation_reflectivity = self._generate_reflectivity_from_labels(np.array(self.validation_labels),
+                                                                               self.number_of_validation_curves)
 
         self.test_labels = self._generate_labels(self.number_of_test_curves)
-        self.test_reflectivity = self._generate_reflectivity_curves(np.array(self.test_labels),
-                                                                    self.number_of_test_curves)
+        self.test_reflectivity = self._generate_reflectivity_from_labels(np.array(self.test_labels),
+                                                                         self.number_of_test_curves)
 
-    def _generate_reflectivity_curves(self, labels: ndarray, number_of_curves: int) -> ndarray:
+    def _generate_reflectivity_from_labels(self, labels: ndarray, number_of_curves: int) -> ndarray:
         thicknesses = labels[:, :self._number_of_layers]
         roughnesses = labels[:, self._number_of_layers:2 * self._number_of_layers]
         slds = labels[:, 2 * self._number_of_layers:3 * self._number_of_layers]
@@ -170,8 +190,8 @@ class ReflectivityGenerator:
         return g
 
     def _generate_labels(self, number_of_samples: int) -> DataFrame:
-        randomized_slds = self._generate_random_values(self.sld, number_of_samples)
-        randomized_thicknesses = self._generate_random_values(self.thickness, number_of_samples)
+        randomized_slds = self._generate_random_values(self.sld_ranges, number_of_samples)
+        randomized_thicknesses = self._generate_random_values(self.thickness_ranges, number_of_samples)
         randomized_roughnesses = self._generate_random_roughness_from_thickness(randomized_thicknesses)
 
         labels = np.concatenate((randomized_thicknesses, randomized_roughnesses, randomized_slds), axis=1)
@@ -179,21 +199,21 @@ class ReflectivityGenerator:
 
         return labels
 
-    def _generate_random_values(self, limits: Iterable[Tuple[float, float]], number_of_values: int) -> ndarray:
+    def _generate_random_values(self, label_ranges: Iterable[Tuple[float, float]], number_of_values: int) -> ndarray:
         randomized_labels = np.zeros((number_of_values, self._number_of_layers))
         for layer_index in range(self._number_of_layers):
-            limits_layer = limits[layer_index]
+            layer_ranges = label_ranges[layer_index]
 
-            if np.all(np.isreal(limits_layer)):
+            if np.all(np.isreal(layer_ranges)):
                 if number_of_values > 10:
-                    randomized_labels[:, layer_index] = self._bolstered_uniform_distribution(*limits_layer,
+                    randomized_labels[:, layer_index] = self._bolstered_uniform_distribution(*layer_ranges,
                                                                                              number_of_values)
                 else:
-                    randomized_labels[:, layer_index] = np.random.uniform(*limits_layer, number_of_values)
+                    randomized_labels[:, layer_index] = np.random.uniform(*layer_ranges, number_of_values)
             else:
-                real_randomized_labels = self._generate_random_values([(limits_layer[0].real, limits_layer[1].real)],
+                real_randomized_labels = self._generate_random_values([(layer_ranges[0].real, layer_ranges[1].real)],
                                                                       number_of_values)
-                imag_randomized_labels = self._generate_random_values([(limits_layer[0].imag, limits_layer[1].imag)],
+                imag_randomized_labels = self._generate_random_values([(layer_ranges[0].imag, layer_ranges[1].imag)],
                                                                       number_of_values)
                 randomized_labels[:, layer_index] = real_randomized_labels + 1j * imag_randomized_labels
 
@@ -231,8 +251,8 @@ class ReflectivityGenerator:
         randomized_roughnesses = np.zeros_like(randomized_thicknesses)
         number_of_samples = randomized_thicknesses.shape[0]
 
-        min_roughnesses = self.roughness[:, 0]
-        max_roughnesses = self.roughness[:, 1]
+        min_roughnesses = self.roughness_ranges[:, 0]
+        max_roughnesses = self.roughness_ranges[:, 1]
 
         for sample in range(number_of_samples):
             for layer in range(self._number_of_layers):
@@ -266,9 +286,9 @@ class ReflectivityGenerator:
 
             data_file.attrs['number_of_layers'] = self._number_of_layers
 
-            data_file.create_dataset('thickness_ranges', data=self.thickness)
-            data_file.create_dataset('roughness_ranges', data=self.roughness)
-            data_file.create_dataset('SLD_ranges', data=self.sld)
+            data_file.create_dataset('thickness_ranges', data=self.thickness_ranges)
+            data_file.create_dataset('roughness_ranges', data=self.roughness_ranges)
+            data_file.create_dataset('SLD_ranges', data=self.sld_ranges)
 
             data_file.attrs['num_curves_train'] = self.number_of_training_curves
             data_file.attrs['num_curves_val'] = self.number_of_validation_curves
