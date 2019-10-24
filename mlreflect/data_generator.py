@@ -9,7 +9,7 @@ from mlreflect import multilayer_reflectivity as refl
 from mlreflect.performance_tools import timer
 
 
-class TrainingData:
+class ReflectivityGenerator:
     """Generation of simulated reflectivity data and labels for neural network training.
 
     Args:
