@@ -242,7 +242,7 @@ class OutputPreprocessor:
         for name in self.normalized_label_names:
             label_min = self._label_limits_dict[name][0]
             label_max = self._label_limits_dict[name][1]
-            if label_max != label_min:
+            if name not in self.constant_label_names:
                 label_df[name] = label_df[name] * (label_max - label_min) + label_min
 
         return label_df
