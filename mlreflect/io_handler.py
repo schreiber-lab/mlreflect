@@ -6,6 +6,8 @@ import pandas as pd
 from numpy import ndarray
 from pandas import DataFrame
 
+from mlreflect.label_names import make_label_names
+
 Jobfunc = Callable[[Iterable[float]], Iterable[float]]
 
 
@@ -144,22 +146,14 @@ class OutputPreprocessor:
         self._number_of_layers = len(self._thickness_limits)
         self._number_of_labels = len(self._label_limits)
 
-        self.label_names = ['' for i in range(self._number_of_labels)]
+        self.label_names = make_label_names(self._number_of_layers)
         self.normalized_label_names = []
-
-        for layer_index in range(self._number_of_layers):
-            self.label_names[layer_index] = f'layer{self._number_of_layers - layer_index}_thickness'
-            self.label_names[
-                layer_index + self._number_of_layers] = f'layer{self._number_of_layers - layer_index}_roughness'
-            self.label_names[
-                layer_index + 2 * self._number_of_layers] = f'layer{self._number_of_layers - layer_index}_sld'
+        self.removed_label_names = []
+        self.constant_label_names = []
 
         self._label_limits_dict = {}
         for label_index in range(self._number_of_labels):
             self._label_limits_dict[self.label_names[label_index]] = self._label_limits[label_index, :]
-
-        self.removed_label_names = []
-        self.constant_label_names = []
 
         for name in self.label_names:
             label_min = self._label_limits_dict[name][0]
