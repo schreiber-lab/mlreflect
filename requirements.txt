@@ -1,3 +1,4 @@
+pandas
 tqdm
 h5py
 numpy
