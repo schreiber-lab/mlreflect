@@ -4,7 +4,7 @@ import numpy as np
 
 
 def multilayer_reflectivity(q_values: Iterable, thickness: Iterable, roughness: Iterable,
-                            scattering_length_density: Iterable, ambient_sld=0.0):
+                            scattering_length_density: Iterable, ambient_sld: float = 0.0):
     """Returns a normalized reflectivity curve for a set of stacked layers with the given parameters.
 
     Args:
