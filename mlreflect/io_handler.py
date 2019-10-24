@@ -6,7 +6,7 @@ import pandas as pd
 from numpy import ndarray
 from pandas import DataFrame
 
-from mlreflect.label_names import make_label_names
+from mlreflect.label_names import make_label_names, convert_to_dataframe
 
 Jobfunc = Callable[[Iterable[float]], Iterable[float]]
 
@@ -161,9 +161,10 @@ class OutputPreprocessor:
             if label_min == label_max:
                 self.constant_label_names += [name]
 
-    def apply_preprocessing(self, labels: ndarray) -> ndarray:
+    def apply_preprocessing(self, labels: Union[DataFrame, ndarray]) -> DataFrame:
         """Returns `labels` after normalizing and removing all labels defined in `removed_label_names`."""
-        label_df = pd.DataFrame(data=labels, columns=self.label_names)
+        label_df = convert_to_dataframe(labels, self.label_names)
+
         label_df = self._remove_labels(label_df)
         label_df = self._normalize_labels(label_df)
         preprocessed_labels = np.array(label_df)
@@ -212,16 +213,16 @@ class OutputPreprocessor:
 
         return label_df
 
-    def restore_labels(self, predicted_labels: ndarray, training_labels: ndarray) -> ndarray:
-        """Takes the predicted labels, reverts normalization and adds removed labels and returns those as ndarray."""
+    def restore_labels(self, predicted_labels: Union[DataFrame, ndarray],
+                       training_labels: Union[ndarray, DataFrame]) -> DataFrame:
 
         predicted_label_names = self.label_names.copy()
         removed_list = self.constant_label_names + self.removed_label_names
         for name in removed_list:
             predicted_label_names.remove(name)
 
-        predicted_labels_df = pd.DataFrame(data=predicted_labels, columns=predicted_label_names)
-        training_labels_df = pd.DataFrame(data=training_labels, columns=self.label_names)
+        predicted_labels_df = convert_to_dataframe(predicted_labels, predicted_label_names)
+        training_labels_df = convert_to_dataframe(training_labels, self.label_names)
 
         restored_labels_df = self._renormalize_labels(predicted_labels_df)
         restored_labels_df = self._add_removed_labels(restored_labels_df, training_labels_df)
