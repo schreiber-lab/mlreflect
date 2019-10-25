@@ -1,4 +1,4 @@
-from typing import Tuple, Iterable
+from typing import Tuple, Iterable, Union
 
 import h5py
 import numpy as np
@@ -8,7 +8,7 @@ from pandas import DataFrame
 from tqdm import tqdm
 
 from mlreflect import multilayer_reflectivity as refl
-from mlreflect.label_names import make_label_names
+from mlreflect.label_names import make_label_names, convert_to_ndarray
 from mlreflect.performance_tools import timer
 
 
@@ -45,7 +45,7 @@ class ReflectivityGenerator:
 
         self._number_of_layers = None
         self._number_of_labels = None
-        
+
         self.label_names = []
 
         self.training_labels = None
@@ -111,21 +111,25 @@ class ReflectivityGenerator:
         self.number_of_test_curves = num_test
 
         self.training_labels = self._generate_labels(self.number_of_training_curves)
-        self.training_reflectivity = self._generate_reflectivity_from_labels(np.array(self.training_labels),
-                                                                             self.number_of_training_curves)
+        self.training_reflectivity = self.generate_reflectivity_from_labels(np.array(self.training_labels))
 
         self.validation_labels = self._generate_labels(self.number_of_validation_curves)
-        self.validation_reflectivity = self._generate_reflectivity_from_labels(np.array(self.validation_labels),
-                                                                               self.number_of_validation_curves)
+        self.validation_reflectivity = self.generate_reflectivity_from_labels(np.array(self.validation_labels))
 
         self.test_labels = self._generate_labels(self.number_of_test_curves)
-        self.test_reflectivity = self._generate_reflectivity_from_labels(np.array(self.test_labels),
-                                                                         self.number_of_test_curves)
+        self.test_reflectivity = self.generate_reflectivity_from_labels(np.array(self.test_labels))
 
-    def _generate_reflectivity_from_labels(self, labels: ndarray, number_of_curves: int) -> ndarray:
-        thicknesses = labels[:, :self._number_of_layers]
-        roughnesses = labels[:, self._number_of_layers:2 * self._number_of_layers]
-        slds = labels[:, 2 * self._number_of_layers:3 * self._number_of_layers]
+    def generate_reflectivity_from_labels(self, labels: Union[DataFrame, ndarray]) -> ndarray:
+        labels = convert_to_ndarray(labels)
+
+        number_of_q_values = len(self.q_values)
+        number_of_curves = labels.shape[0]
+        number_of_labels = labels.shape[1]
+        number_of_layers = int(number_of_labels / 3)
+
+        thicknesses = labels[:, :number_of_layers]
+        roughnesses = labels[:, number_of_layers:2 * number_of_layers]
+        slds = labels[:, 2 * number_of_layers:3 * number_of_layers]
 
         thicknesses_si = thicknesses * 1e-10
         roughnesses_si = roughnesses * 1e-10
@@ -134,7 +138,7 @@ class ReflectivityGenerator:
 
         q_values_si = self.q_values * 1e10
 
-        reflectivity_curves = np.zeros([number_of_curves, len(q_values_si)])
+        reflectivity_curves = np.zeros([number_of_curves, number_of_q_values])
 
         noisy_q_values = self._make_noisy_q_values(q_values_si, number_of_curves)
 
