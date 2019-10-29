@@ -35,6 +35,8 @@ class InputPreprocessor:
         self._standard_mean = None
         self._standard_std = None
 
+        self._saved_standardization_values = False
+
     @property
     def job_list(self):
         return self._job_list
@@ -82,7 +84,7 @@ class InputPreprocessor:
 
     def standardize(self, data: ndarray, axis: int = 0) -> ndarray:
         """Applies standardization along specified axis and returns standardized data. Mean and std will be reused."""
-        if self._standard_mean and self._standard_std is not None:
+        if self._saved_standardization_values is True:
             mean = self._standard_mean
             std = self._standard_std
             data_centered = data - mean
@@ -93,6 +95,7 @@ class InputPreprocessor:
 
             self._standard_mean = mean
             self._standard_std = std
+            self._saved_standardization_values = True
 
         standardized_data = data_centered / std
         return standardized_data
@@ -101,6 +104,7 @@ class InputPreprocessor:
         """Resets previously stored mean and standard deviation for standardization."""
         self._standard_mean = None
         self._standard_std = None
+        self._saved_standardization_values = False
 
 
 class OutputPreprocessor:
