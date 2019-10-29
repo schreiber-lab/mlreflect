@@ -82,16 +82,16 @@ class InputPreprocessor:
         """Shortcut for numpy.log function."""
         return np.log(data)
 
-    def standardize(self, data: ndarray, axis: int = 0) -> ndarray:
-        """Applies standardization along specified axis and returns standardized data. Mean and std will be reused."""
+    def standardize(self, data: ndarray) -> ndarray:
+        """Applies standardization along axis 0 and returns standardized data. Mean and std will be reused."""
         if self._saved_standardization_values is True:
             mean = self._standard_mean
             std = self._standard_std
             data_centered = data - mean
         else:
-            mean = np.mean(data, axis=axis)
+            mean = np.mean(data, axis=0)
             data_centered = data - mean
-            std = np.std(data_centered, axis=axis)
+            std = np.std(data_centered, axis=0)
 
             self._standard_mean = mean
             self._standard_std = std
