@@ -1,6 +1,7 @@
 from typing import Union
 
 import keras
+import numpy as np
 from numpy import ndarray
 from pandas import DataFrame
 
@@ -42,6 +43,10 @@ class SimpleModel:
 
     def train(self, input_train: ndarray, output_train: Union[DataFrame, ndarray], input_val: ndarray,
               output_val: Union[DataFrame, ndarray]):
+
+        output_train = np.array(output_train)
+        output_val = np.array(output_val)
+
         create_save_directory(self.folder_name)
 
         tb_callback = make_tensorboard_callback(self.folder_name)
