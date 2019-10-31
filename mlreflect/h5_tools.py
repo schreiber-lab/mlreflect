@@ -1,3 +1,4 @@
+import os
 from typing import Any
 
 import h5py
@@ -11,8 +12,7 @@ from pandas import DataFrame
 def save_data_as_h5(file_name: str, group_name: str, q_values: ndarray, reflectivity: ndarray, labels: DataFrame):
     """Saves `q_values`, `reflectivity` and `labels` in the .5h file `file_name` in the group `group name`."""
 
-    if not (file_name.endswith('.h5') or file_name.endswith('.hdf5')):
-        file_name += '.h5'
+    file_name = ensure_h5_extension(file_name)
 
     number_of_layers = labels.shape[1] * 3
     number_of_curves = labels.shape[0]
@@ -62,3 +62,14 @@ def create_dataset_with_override(file: File, name: Any, data: Any):
         del file[name]
 
     file.create_dataset(name, data=data)
+
+
+def ensure_h5_extension(file_name: str):
+    if not (file_name.endswith('.h5') or file_name.endswith('.hdf5')):
+        file_name += '.h5'
+
+    return file_name
+
+
+def strip_file_extension(file_name: str):
+    return os.path.splitext(file_name)[0]
