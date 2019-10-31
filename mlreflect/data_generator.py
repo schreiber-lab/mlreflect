@@ -89,6 +89,7 @@ class ReflectivityGenerator:
 
         return labels
 
+    @timer
     def simulate_reflectivity(self, labels: Union[DataFrame, ndarray]) -> ndarray:
         """Simulates reflectivity curves for the given labels and returns them as ndarray.
 
