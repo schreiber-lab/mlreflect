@@ -259,6 +259,6 @@ class OutputPreprocessor:
         """Adds all labels in `removed_label_names` from `training_labels_df` to `predicted_labels_df`."""
         removal_list = self.constant_label_names + self.skipped_label_names
         for name in removal_list:
-            predicted_labels_df[name] = training_labels_df[name]
+            predicted_labels_df[name] = training_labels_df[name].reset_index(drop=True)
 
         return predicted_labels_df
