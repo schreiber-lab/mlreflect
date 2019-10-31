@@ -1,10 +1,9 @@
-import datetime
-import os
 from typing import Union
 
 import keras
 from numpy import ndarray
 from pandas import DataFrame
+
 from mlreflect.models.model_helpers import make_tensorboard_callback, make_save_path, create_save_directory
 
 
@@ -43,7 +42,6 @@ class SimpleModel:
 
     def train(self, input_train: ndarray, output_train: Union[DataFrame, ndarray], input_val: ndarray,
               output_val: Union[DataFrame, ndarray]):
-
         create_save_directory(self.save_name)
 
         tb_callback = make_tensorboard_callback(self.save_name)

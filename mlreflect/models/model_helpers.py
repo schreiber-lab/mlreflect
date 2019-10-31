@@ -20,7 +20,7 @@ def make_save_path(model_folder: str):
     model_name = os.path.basename(model_folder)
     base_wo_ext = h5_tools.strip_file_extension(model_name)
 
-    path = os.path.join(dirname, base_wo_ext,  base_wo_ext + '_' + time_stamp + '.h5')
+    path = os.path.join(dirname, base_wo_ext, base_wo_ext + '_' + time_stamp + '.h5')
     return path
 
 
