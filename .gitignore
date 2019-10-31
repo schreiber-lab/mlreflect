@@ -1,4 +1,4 @@
 .idea/
 data/notebooks/output/*
-data/notebooks/.ipynb_checkpoints
+data/notebooks/.ipynb_checkpoints/*
 mlreflect/__pycache__/
