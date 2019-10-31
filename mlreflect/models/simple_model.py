@@ -8,8 +8,8 @@ from mlreflect.models.model_helpers import make_tensorboard_callback, make_save_
 
 
 class SimpleModel:
-    def __init__(self, save_name: str, n_input: int, n_output: int):
-        self.save_name = save_name
+    def __init__(self, folder_name: str, n_input: int, n_output: int):
+        self.folder_name = folder_name
 
         self.model = keras.models.Sequential()
         self.model.add(keras.layers.Dense(400, input_dim=n_input))
@@ -42,11 +42,11 @@ class SimpleModel:
 
     def train(self, input_train: ndarray, output_train: Union[DataFrame, ndarray], input_val: ndarray,
               output_val: Union[DataFrame, ndarray]):
-        create_save_directory(self.save_name)
+        create_save_directory(self.folder_name)
 
-        tb_callback = make_tensorboard_callback(self.save_name)
+        tb_callback = make_tensorboard_callback(self.folder_name)
 
-        save_path = make_save_path(self.save_name)
+        save_path = make_save_path(self.folder_name)
 
         checkpoint = keras.callbacks.ModelCheckpoint(filepath=save_path, monitor='val_loss', verbose=1,
                                                      save_best_only=True)
