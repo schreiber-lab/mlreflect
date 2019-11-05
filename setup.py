@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='mlreflect',
@@ -6,7 +6,7 @@ setup(
     author='Alessandro Greco',
     author_email='alessandro.greco@uni-tuebingen.de',
     license='GPL3',
-    packages=['mlreflect'],
+    packages=find_packages(),
     zip_safe=False,
     install_requires=[
         'pandas',
