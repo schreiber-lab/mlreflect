@@ -3,7 +3,7 @@ from datetime import datetime
 
 from keras import callbacks as cb
 
-from mlreflect import h5_tools
+from .. import h5_tools
 
 
 def create_save_directory(folder_name: str):

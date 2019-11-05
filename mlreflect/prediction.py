@@ -6,8 +6,8 @@ from keras import Model
 from numpy import ndarray
 from pandas import DataFrame
 
-from mlreflect.label_names import convert_to_dataframe
-from mlreflect.performance_tools import timer
+from .label_names import convert_to_dataframe
+from .performance_tools import timer
 
 
 class Prediction:

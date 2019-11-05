@@ -5,7 +5,7 @@ import numpy as np
 from numpy import ndarray
 from pandas import DataFrame
 
-from mlreflect.label_names import make_label_names, convert_to_dataframe
+from .label_names import make_label_names, convert_to_dataframe
 
 Jobfunc = Callable[[Iterable[float]], Iterable[float]]
 

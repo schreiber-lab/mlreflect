@@ -1,8 +1,8 @@
-from mlreflect.reflectivity import multilayer_reflectivity
-from mlreflect.data_generator import ReflectivityGenerator
-from mlreflect.preprocessing import InputPreprocessor, OutputPreprocessor
-from mlreflect.prediction import Prediction
-from mlreflect import h5_tools
+from .reflectivity import multilayer_reflectivity
+from .data_generator import ReflectivityGenerator
+from .preprocessing import InputPreprocessor, OutputPreprocessor
+from .prediction import Prediction
+from . import h5_tools
 
 __all__ = ['multilayer_reflectivity', 'ReflectivityGenerator', 'InputPreprocessor', 'OutputPreprocessor',
            'Prediction', 'h5_tools']

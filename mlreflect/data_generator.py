@@ -6,9 +6,9 @@ from numpy import ndarray
 from pandas import DataFrame
 from tqdm import tqdm
 
-from mlreflect import multilayer_reflectivity as refl
-from mlreflect.label_names import make_label_names, convert_to_ndarray
-from mlreflect.performance_tools import timer
+from .reflectivity import multilayer_reflectivity as refl
+from .label_names import make_label_names, convert_to_ndarray
+from .performance_tools import timer
 
 
 class ReflectivityGenerator:
