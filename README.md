@@ -1,4 +1,4 @@
-# ML-reflectivity
+# mlreflect
 
 Fast fitting of reflectivity curves using machine learning.
 
