@@ -2,7 +2,7 @@
 
 Fast fitting of reflectivity curves using machine learning.
 
-## Authors
+## Authors and contributors
 - Alessandro Greco (Institut für Angewandte Physik, University of Tübingen)
 - Vladimir Starostin (Institut für Angewandte Physik, University of Tübingen)
 - Christos Karapanagiotis (Institut für Physik, Humboldt Universität zu Berlin)
