@@ -50,15 +50,16 @@ class ReflectivityGenerator:
         """Generates random labels in the given parameter ranges and returns them as pandas DataFrame.
 
         Args:
-            thickness_ranges: An array-like object (list, tuple, ndarray, etc.) that contains a tuple with the min and max
-                thickness in units of Å for each sample layer in order from top to bottom. The thickness of the bottom most
-                layer (substrate) is not relevant for the simulation, but some value must be provided, e.g. (1, 1).
-            roughness_ranges: An array-like object (list, tuple, ndarray, etc.) that contains a tuple with the min and max
-                roughness in units of Å for each sample interface in order from top (ambient/top layer) to bottom (bottom
-                layer/substrate).
+            thickness_ranges: An array-like object (list, tuple, ndarray, etc.) that contains a tuple with the min and
+                max thickness in units of Å for each sample layer in order from top to bottom. The thickness of the
+                bottom most layer (substrate) is not relevant for the simulation, but some value must be provided, e.g.
+                (1, 1).
+            roughness_ranges: An array-like object (list, tuple, ndarray, etc.) that contains a tuple with the min and
+                max roughness in units of Å for each sample interface in order from top (ambient/top layer) to bottom
+                (bottom layer/substrate).
             sld_ranges: An array-like object (list, tuple, ndarray, etc.) that contains a tuple with the min and max
-                scattering length density (SLD) in units of 1e+14 1/Å^2 for each sample layer in order from top to bottom
-                (excluding the ambient SLD).
+                scattering length density (SLD) in units of 1e+14 1/Å^2 for each sample layer in order from top to
+                bottom (excluding the ambient SLD).
             number_of_samples: Number of label sets that will be generated.
             bolster_fraction: Fraction of simulated samples that will be redistributed to the ends of the distribution.
             bolster_width: Width of the Gaussian distribution of the redistributed samples.
