@@ -183,14 +183,11 @@ class ReflectivityGenerator:
             layer_ranges = label_ranges[layer_index]
 
             if np.all(np.isreal(layer_ranges)):
-                if number_of_values > 10:
-                    randomized_labels[:, layer_index] = self._bolstered_uniform_distribution(layer_ranges[0],
-                                                                                             layer_ranges[1],
-                                                                                             number_of_values,
-                                                                                             bolster_fraction,
-                                                                                             bolster_width)
-                else:
-                    randomized_labels[:, layer_index] = np.random.uniform(*layer_ranges, number_of_values)
+                randomized_labels[:, layer_index] = self._bolstered_uniform_distribution(layer_ranges[0],
+                                                                                         layer_ranges[1],
+                                                                                         number_of_values,
+                                                                                         bolster_fraction,
+                                                                                         bolster_width)
             else:
                 real_randomized_labels = self._generate_random_values(np.asarray([(layer_ranges[0].real, layer_ranges[
                     1].real)]), number_of_values, bolster_fraction, bolster_width)
@@ -207,7 +204,7 @@ class ReflectivityGenerator:
     float, bolster_width: float) -> ndarray:
         span = value_max - value_min
 
-        n_bolster = int(np.ceil(n_samples * bolster_fraction / 2))
+        n_bolster = int(np.floor(n_samples * bolster_fraction / 2))
         n_uniform = n_samples - 2 * n_bolster
 
         uniform = np.random.uniform(value_min, value_max, n_uniform)
