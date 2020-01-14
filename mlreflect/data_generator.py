@@ -108,12 +108,8 @@ class ReflectivityGenerator:
 
         number_of_q_values = len(self.q_values)
         number_of_curves = labels.shape[0]
-        number_of_labels = labels.shape[1]
-        number_of_layers = int(number_of_labels / 3)
 
-        thicknesses = labels[:, :number_of_layers]
-        roughnesses = labels[:, number_of_layers:2 * number_of_layers]
-        slds = labels[:, 2 * number_of_layers:3 * number_of_layers]
+        thicknesses, roughnesses, slds = self.separate_labels(labels)
 
         thicknesses_si = thicknesses * 1e-10
         roughnesses_si = roughnesses * 1e-10
@@ -260,3 +256,14 @@ class ReflectivityGenerator:
     def _thickness_correlation(thickness: float) -> float:
         roughness = thickness / 2
         return roughness
+
+    @staticmethod
+    def separate_labels(labels: ndarray) -> Tuple[ndarray, ndarray, ndarray]:
+        number_of_labels = labels.shape[1]
+        number_of_layers = int(number_of_labels / 3)
+
+        thicknesses = labels[:, :number_of_layers]
+        roughnesses = labels[:, number_of_layers:2 * number_of_layers]
+        slds = labels[:, 2 * number_of_layers:3 * number_of_layers]
+
+        return thicknesses, roughnesses, slds
