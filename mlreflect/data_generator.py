@@ -45,9 +45,9 @@ class ReflectivityGenerator:
     @timer
     def generate_random_labels(self, thickness_ranges: Iterable[Tuple[float, float]],
                                roughness_ranges: Iterable[Tuple[float, float]],
-                               sld_ranges: Iterable[Tuple[float, float]],
-                               number_of_samples: int, bolster_fraction: float = 0.15, bolster_width: float = 0.1) -> \
-            DataFrame:
+                               sld_ranges: Iterable[Tuple[float, float]], number_of_samples: int,
+                               distribution_type: str = 'bolstered', bolster_fraction: float = 0.15,
+                               bolster_width: float = 0.1) -> DataFrame:
         """Generates random labels in the given parameter ranges and returns them as pandas DataFrame.
 
         Args:
@@ -62,7 +62,8 @@ class ReflectivityGenerator:
                 scattering length density (SLD) in units of 1e+14 1/Å^2 for each sample layer in order from top to
                 bottom (excluding the ambient SLD).
             number_of_samples: Number of label sets that will be generated.
-            bolster_fraction: Fraction of simulated samples that will be redistributed to the ends of the distribution.
+            distribution_type: Can be 'bolstered' (default) or 'uniform'.
+            bolster_fraction: Fraction of simulated samples that will be redistributed to the sides of the distribution.
             bolster_width: Width of the Gaussian distribution of the redistributed samples.
 
         Returns:
@@ -80,9 +81,10 @@ class ReflectivityGenerator:
 
         label_names = make_label_names(number_of_layers)
 
-        randomized_slds = self._generate_random_values(sld_ranges, number_of_samples, bolster_fraction, bolster_width)
-        randomized_thicknesses = self._generate_random_values(thickness_ranges, number_of_samples, bolster_fraction,
-                                                              bolster_width)
+        randomized_slds = self._generate_random_values(sld_ranges, number_of_samples, distribution_type,
+                                                       bolster_fraction, bolster_width)
+        randomized_thicknesses = self._generate_random_values(thickness_ranges, number_of_samples, distribution_type,
+                                                              bolster_fraction, bolster_width)
         randomized_roughnesses = self._generate_random_roughness_from_thickness(roughness_ranges,
                                                                                 randomized_thicknesses)
 
@@ -173,8 +175,8 @@ class ReflectivityGenerator:
         g = 1 / (2 * np.pi * sigma ** 2) * np.exp(-(x - mu) ** 2 / (2 * sigma ** 2))
         return g
 
-    def _generate_random_values(self, label_ranges: ndarray, number_of_values: int, bolster_fraction: float,
-                                bolster_width: float) -> ndarray:
+    def _generate_random_values(self, label_ranges: ndarray, number_of_values: int, distribution_type: str,
+                                bolster_fraction: float, bolster_width: float) -> ndarray:
 
         number_of_layers = label_ranges.shape[0]
 
@@ -183,18 +185,23 @@ class ReflectivityGenerator:
             layer_ranges = label_ranges[layer_index]
 
             if np.all(np.isreal(layer_ranges)):
-                randomized_labels[:, layer_index] = self._bolstered_uniform_distribution(layer_ranges[0],
-                                                                                         layer_ranges[1],
-                                                                                         number_of_values,
-                                                                                         bolster_fraction,
-                                                                                         bolster_width)
+                if distribution_type == 'bolstered':
+                    randomized_labels[:, layer_index] = self._bolstered_uniform_distribution(layer_ranges[0],
+                                                                                             layer_ranges[1],
+                                                                                             number_of_values,
+                                                                                             bolster_fraction,
+                                                                                             bolster_width)
+                elif distribution_type == 'uniform':
+                    randomized_labels[:, layer_index] = np.random.uniform(layer_ranges[0], layer_ranges[1],
+                                                                          number_of_values)
+
             else:
                 real_randomized_labels = self._generate_random_values(np.asarray([(layer_ranges[0].real, layer_ranges[
-                    1].real)]), number_of_values, bolster_fraction, bolster_width)
+                    1].real)]), number_of_values, distribution_type, bolster_fraction, bolster_width)
 
                 imag_randomized_labels = self._generate_random_values(
-                    np.asarray([(layer_ranges[0].imag, layer_ranges[1].imag)]), number_of_values, bolster_fraction,
-                    bolster_width)
+                    np.asarray([(layer_ranges[0].imag, layer_ranges[1].imag)]), number_of_values, distribution_type,
+                    bolster_fraction, bolster_width)
 
                 randomized_labels[:, layer_index] = real_randomized_labels + 1j * imag_randomized_labels
 
