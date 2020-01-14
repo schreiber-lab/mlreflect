@@ -1,14 +1,15 @@
-from typing import Tuple, Iterable, Union
+from typing import Tuple, Iterable, Union, List
 
 import numpy as np
 import pandas as pd
 from numpy import ndarray
 from pandas import DataFrame
+from scipy.special import erf
 from tqdm import tqdm
 
-from .reflectivity import multilayer_reflectivity as refl
 from .label_names import make_label_names, convert_to_ndarray
 from .performance_tools import timer
+from .reflectivity import multilayer_reflectivity as refl
 
 
 class ReflectivityGenerator:
@@ -256,6 +257,104 @@ class ReflectivityGenerator:
     def _thickness_correlation(thickness: float) -> float:
         roughness = thickness / 2
         return roughness
+
+    @timer
+    def simulate_sld_profiles(self, labels: Union[DataFrame, ndarray]) -> List[ndarray]:
+        """Simulates real scattering length density profiles for the given labels and returns them as ndarray.
+
+        Args:
+            labels: Must be ndarray or DataFrame with each column representing one label. The label order from left to
+            right must be "thickness", "roughness" and "scattering length density" with decreasing layer number
+            within each label.
+                Example for 2 layers: ['thickness_layer2', 'thickness_layer1', 'roughness_layer2', 'roughness_layer1',
+                'sld_layer2', 'sld_layer1']
+
+        Returns:
+            sld_profiles: Simulated scattering length density profiles (real part).
+        """
+
+        labels = convert_to_ndarray(labels)
+
+        number_of_profiles = labels.shape[0]
+
+        thicknesses, roughnesses, slds = self.separate_labels(labels)
+
+        thicknesses = np.fliplr(thicknesses[:, :-1])
+        sld_substrate = slds[:, -1]
+        slds = np.fliplr(slds[:, :-1])
+        roughnesses = np.fliplr(roughnesses[:, :])
+
+        sld_profiles = []
+
+        for i in tqdm(range(number_of_profiles)):
+            height, profile = self.make_sld_profile(thicknesses[i, :], slds[i, :], roughnesses[i, :], sld_substrate[i],
+                                                    self.ambient_sld)
+
+            profile = np.zeros((2, len(height)))
+            profile[0, :] = height
+            profile[1, :] = profile
+            sld_profiles += [profile]
+
+        return sld_profiles
+
+    def make_sld_profile(self, thickness: ndarray, sld: ndarray, roughness: ndarray, sld_substrate: float, sld_ambient:
+    float) -> Tuple[ndarray, ndarray]:
+        """Generate scattering length density profile in units 1/Å^-2 * 10^-6 with height in units Å.
+        
+        Args:
+            thickness: ndarray of layer thicknesses in units Å from bottom to top. For no layers (only substrate) 
+                provide empty tuple ().
+            sld: ndarray of layer scattering length densities in units 1/Å^-2 * 10^-6 from bottom to top.  For no layers
+                (only substrate) provide empty tuple ().
+            roughness: ndarray of RMS interface roughnesses in units Å from bottom to top. At least one has to be given.
+            sld_substrate: Scattering length density of the used substrate in units 1/Å^-2 * 10^-6.
+            sld_ambient: Scattering length density of the ambient medium in units 1/Å^-2 * 10^-6.
+
+        Returns:
+            height, sld_profile: Tuple of ndarrays of sample height in units Å and the scattering length density profile
+                in units 1/Å^-2 * 10^-6.
+        """
+
+        if not len(thickness) == len(sld) == (len(roughness) - 1):
+            raise ValueError('Number of layers must be consistent')
+
+        total_thickness = np.sum(thickness)
+        cumulative_thickness = np.append(0, np.cumsum(thickness))
+
+        sld = np.append(sld_substrate, sld)
+        sld = np.append(sld, sld_ambient)
+
+        sld = np.real(sld)
+
+        dummy_sub_thickness = 100
+        dummy_ambient_thickness = 100
+
+        height = np.arange(-dummy_sub_thickness, total_thickness + dummy_ambient_thickness, 0.1)
+        sld_profile = np.ones_like(height) * sld[0]
+        for i in range(len(roughness)):
+            center = cumulative_thickness[i]
+            width = roughness[i]
+
+            segment = self._smooth_step(height, center, width, sld[i], sld[i + 1])
+
+            sld_profile += segment
+
+        return height, sld_profile
+
+    @staticmethod
+    def _smooth_step(z: ndarray, center: float, stdev: float, left_value: float, right_value: float) -> ndarray:
+        difference = abs(left_value - right_value)
+
+        profile = erf((z - center) / (stdev * np.sqrt(2)))
+
+        profile += 1
+
+        if left_value > right_value:
+            profile *= -1
+
+        profile *= difference / 2
+
+        return profile
 
     @staticmethod
     def separate_labels(labels: ndarray) -> Tuple[ndarray, ndarray, ndarray]:
