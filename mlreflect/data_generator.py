@@ -290,10 +290,10 @@ class ReflectivityGenerator:
             height, profile = self.make_sld_profile(thicknesses[i, :], slds[i, :], roughnesses[i, :], sld_substrate[i],
                                                     self.ambient_sld)
 
-            profile = np.zeros((2, len(height)))
-            profile[0, :] = height
-            profile[1, :] = profile
-            sld_profiles += [profile]
+            this_profile = np.zeros((2, len(height)))
+            this_profile[0, :] = height
+            this_profile[1, :] = profile
+            sld_profiles += [this_profile]
 
         return sld_profiles
 
