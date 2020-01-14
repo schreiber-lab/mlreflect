@@ -2,6 +2,8 @@ from typing import Union
 
 import keras
 import numpy as np
+
+from datetime import datetime
 from numpy import ndarray
 from pandas import DataFrame
 
@@ -9,8 +11,8 @@ from .model_helpers import make_tensorboard_callback, make_save_path, create_sav
 
 
 class SimpleModel:
-    def __init__(self, folder_name: str, n_input: int, n_output: int):
-        self.folder_name = folder_name
+    def __init__(self, directory_name: str, n_input: int, n_output: int):
+        self.directory_name = directory_name
 
         self.model = keras.models.Sequential()
         self.model.add(keras.layers.Dense(400, input_dim=n_input))
@@ -46,11 +48,11 @@ class SimpleModel:
         output_train = np.array(output_train)
         output_val = np.array(output_val)
 
-        create_save_directory(self.folder_name)
+        time_stamp = datetime.now().strftime('%Y-%m-%d-%H%M%S')
 
-        tb_callback = make_tensorboard_callback(self.folder_name)
+        tb_callback = make_tensorboard_callback(self.directory_name, time_stamp)
 
-        save_path = make_save_path(self.folder_name)
+        save_path = make_save_path(self.directory_name, time_stamp)
 
         checkpoint = keras.callbacks.ModelCheckpoint(filepath=save_path, monitor='val_loss', verbose=1,
                                                      save_best_only=True)

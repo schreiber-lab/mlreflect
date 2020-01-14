@@ -6,32 +6,33 @@ from keras import callbacks as cb
 from .. import h5_tools
 
 
-def create_save_directory(folder_name: str):
-    directory_name = h5_tools.strip_file_extension(folder_name)
+def create_save_directory(directory_name: str):
+    directory_name = h5_tools.strip_file_extension(directory_name)
 
     if not os.path.exists(directory_name):
         os.makedirs(directory_name)
 
 
-def make_save_path(model_folder: str):
-    time_stamp = datetime.now().strftime('%Y-%m-%d-%H%M%S')
-
-    dirname = os.path.dirname(model_folder)
-    model_name = os.path.basename(model_folder)
+def make_save_path(model_directory: str, time_stamp: str):
+    dirname = os.path.dirname(model_directory)
+    model_name = os.path.basename(model_directory)
     model_name_wo_ext = h5_tools.strip_file_extension(model_name)
+    
+    save_directory = os.path.join(dirname, model_name_wo_ext, 'models')
+    
+    create_save_directory(save_directory)
 
-    path = os.path.join(dirname, model_name_wo_ext, model_name_wo_ext + '_' + time_stamp + '.h5')
+    path = os.path.join(save_directory, model_name_wo_ext + '_' + time_stamp + '.h5')
     return path
 
 
-def make_tensorboard_callback(model_folder: str, graphs_subfolder: str = 'tb_graphs'):
-    time_stamp = datetime.now().strftime('%Y-%m-%d-%H%M%S')
+def make_tensorboard_callback(model_directory: str, time_stamp: str, graphs_subdirectory: str = 'tb_graphs'):
 
-    dirname = os.path.dirname(model_folder)
-    model_name = os.path.basename(model_folder)
+    dirname = os.path.dirname(model_directory)
+    model_name = os.path.basename(model_directory)
     model_name_wo_ext = h5_tools.strip_file_extension(model_name)
 
-    logdir = os.path.join(dirname, model_name_wo_ext, graphs_subfolder, time_stamp)
+    logdir = os.path.join(dirname, model_name_wo_ext, graphs_subdirectory, time_stamp)
 
     create_save_directory(logdir)
 
