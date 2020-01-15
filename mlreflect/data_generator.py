@@ -20,27 +20,40 @@ class ReflectivityGenerator:
             1/Å at which the reflected intensity will be simulated.
         ambient_sld: Scattering length density of the ambient environment above the top most layer in units of 1e+14
             1/Å^2, e.g. ~0 for air.
-        random_seed: Random seed for numpy.random.seed which affects the generation of the random labels.
+        random_seed: Random seed for numpy.random.seed which affects the generation of the random labels (default 1).
+        q_noise_spread: Standard deviation of the normal distribution of scaling factors (centered at 1) that are
+            applied to each q-value during reflectivity simulation.
+        shot_noise_spread: Scaling factor c for the standard deviation sqrt(I*c) of the shot noise around the intensity
+            of simulated reflectivity curves. Since the intensity is normalized, this is equivalent to setting the
+            number of photon counts N = 1/c.
+        background_noise_base_level: Constant background intensity that is added to reflectivity simulations.
+        background_noise_spread: Standard deviation of the background intensity centered at background_noise_base_level.
+        slit_width: Not implemented yet.
 
     Methods:
         generate_random_labels()
         simulate_reflectivity()
+        simulate_sld_profiles()
+        make_sld_profile()
+        separate_labels()
 
     Returns:
         TrainingData object.
     """
 
-    def __init__(self, q_values: ndarray, ambient_sld: float, random_seed: int = 1):
+    def __init__(self, q_values: ndarray, ambient_sld: float, q_noise_spread: float = 0, shot_noise_spread: float = 0,
+                 background_noise_base_level: float = 0, background_noise_spread: float = 0, slit_width: float = 0,
+                 random_seed: int = 1):
 
         np.random.seed(random_seed)
         self.q_values = np.asarray(q_values)
         self.ambient_sld = ambient_sld
 
-        self.q_noise_spread = 0
-        self.shot_noise_spread = 0
-        self.background_noise_base_level = 0
-        self.background_noise_spread = 0
-        self.slit_width = 0
+        self.q_noise_spread = q_noise_spread
+        self.shot_noise_spread = shot_noise_spread
+        self.background_noise_base_level = background_noise_base_level
+        self.background_noise_spread = background_noise_spread
+        self.slit_width = slit_width
 
     @timer
     def generate_random_labels(self, thickness_ranges: Iterable[Tuple[float, float]],
