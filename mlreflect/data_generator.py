@@ -141,8 +141,8 @@ class ReflectivityGenerator:
         return q_values * percentage_deviation
 
     def _apply_shot_noise(self, reflectivity_curve: ndarray) -> ndarray:
-        noisy_reflectivity = np.clip(np.random.normal(reflectivity_curve, self.shot_noise_spread * np.sqrt(
-            reflectivity_curve)), 1e-8, None)
+        noisy_reflectivity = np.clip(
+            np.random.normal(reflectivity_curve, np.sqrt(reflectivity_curve * self.shot_noise_spread)), 1e-8, None)
 
         return noisy_reflectivity
 
