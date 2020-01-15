@@ -2,6 +2,24 @@
 
 Fast fitting of reflectivity curves using machine learning.
 
+## Installation
+The mlreflect package can be installed via the command line using the python package manager pip:
+
+`pip install mlreflect/`
+
+The main dependencies can be install via pip via
+
+`pip install -r mlreflect/requirements.txt`
+
+The package can then be imported in python using
+
+`import mlreflect`
+
+or
+
+`from mlreflect import <module>`
+
+
 ## Authors and contributors
 - Alessandro Greco (Institut für Angewandte Physik, University of Tübingen)
 - Vladimir Starostin (Institut für Angewandte Physik, University of Tübingen)
