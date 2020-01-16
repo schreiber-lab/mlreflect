@@ -13,5 +13,6 @@ setup(
     license='GPL3',
     packages=find_packages(),
     zip_safe=False,
-    install_requires=requirements
+    install_requires=requirements,
+    python_requires='>=3.7'
 )
