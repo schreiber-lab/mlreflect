@@ -28,7 +28,8 @@ class ReflectivityGenerator:
             number of photon counts N = 1/c.
         background_noise_base_level: Constant background intensity that is added to reflectivity simulations.
         background_noise_spread: Standard deviation of the background intensity centered at background_noise_base_level.
-        slit_width: Not implemented yet.
+        blur_width: Standard deviation of the gaussian blur in units of 1/Å that is applied to simulated reflectivity
+        curves to simulate the slit function. If blur_width = 0 (default) no blur is  applied.
 
     Methods:
         generate_random_labels()
@@ -42,7 +43,7 @@ class ReflectivityGenerator:
     """
 
     def __init__(self, q_values: ndarray, ambient_sld: float, q_noise_spread: float = 0, shot_noise_spread: float = 0,
-                 background_noise_base_level: float = 0, background_noise_spread: float = 0, slit_width: float = 0,
+                 background_noise_base_level: float = 0, background_noise_spread: float = 0, blur_width: float = 0,
                  random_seed: int = 1):
 
         np.random.seed(random_seed)
@@ -53,7 +54,7 @@ class ReflectivityGenerator:
         self.shot_noise_spread = shot_noise_spread
         self.background_noise_base_level = background_noise_base_level
         self.background_noise_spread = background_noise_spread
-        self.slit_width = slit_width
+        self.blur_width = blur_width
 
     @timer
     def generate_random_labels(self, thickness_ranges: Iterable[Tuple[float, float]],
@@ -142,7 +143,8 @@ class ReflectivityGenerator:
             reflectivity = refl(noisy_q_values[curve, :], thicknesses_si[curve, :], roughnesses_si[curve, :],
                                 slds_si[curve, :], ambient_sld_si)
 
-            reflectivity_noisy = self._apply_shot_noise(reflectivity)
+            reflectivity_noisy = self._apply_gaussian_blur(reflectivity)
+            reflectivity_noisy = self._apply_shot_noise(reflectivity_noisy)
             reflectivity_noisy = self._apply_background_noise(reflectivity_noisy)
 
             reflectivity_curves[curve, :] = reflectivity_noisy
@@ -165,28 +167,24 @@ class ReflectivityGenerator:
 
         return reflectivity_curve + background
 
-    # TODO This method is not yet finished and should only be used with slit_width = 0.
-    def _apply_slit_convolution(self, q_values: ndarray, reflectivity_curve: ndarray) -> ndarray:
-        raise NotImplementedError('slit convolution not implemented yet')
-        sigma = self.slit_width
+    def _apply_gaussian_blur(self, reflectivity_curve: ndarray) -> ndarray:
+        sigma = self.blur_width
         if sigma == 0:
             return reflectivity_curve
 
-        conv_reflectivity = np.zeros_like(reflectivity_curve)
-        q_values /= np.max(q_values)
-        for i in range(len(conv_reflectivity)):
-            q_pos = q_values[i]
-            g = self._gauss(q_values, sigma, q_pos)
-            g_norm = g / sum(g)
-
-            weighted_reflectivity = g_norm * reflectivity_curve
-            conv_reflectivity[i] = sum(weighted_reflectivity)
-        return conv_reflectivity
+        gaussian, _ = self._make_gaussian(self.q_values, self.blur_width)
+        blurred_reflectivity = np.convolve(reflectivity_curve, gaussian, 'same')
+        return blurred_reflectivity
 
     @staticmethod
-    def _gauss(x: ndarray, sigma: float = 1.0, mu: float = 0.0) -> ndarray:
-        g = 1 / (2 * np.pi * sigma ** 2) * np.exp(-(x - mu) ** 2 / (2 * sigma ** 2))
-        return g
+    def _make_gaussian(x: ndarray, std: float, n_std: float = 5):
+        center = np.min(x) + (np.max(x) - np.min(x)) / 2
+        g = np.exp(- ((x - center) / std) ** 2 / 2) / (std * np.sqrt(2 * np.pi))
+        g /= np.sum(g)
+        gauss_range = ((x - center) >= -n_std * std) & ((x - center) <= n_std * std)
+        g = g[gauss_range]
+        x_red = x[gauss_range]
+        return g, x_red
 
     def _generate_random_values(self, label_ranges: ndarray, number_of_values: int, distribution_type: str,
                                 bolster_fraction: float, bolster_width: float) -> ndarray:
