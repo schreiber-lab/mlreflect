@@ -18,7 +18,7 @@ class ReflectivityGenerator:
     Args:
         q_values: An array-like object (list, tuple, ndarray, etc.) that contains the q-values in units of
             1/Å at which the reflected intensity will be simulated.
-        ambient_sld: Scattering length density of the ambient environment above the top most layer in units of 1e+14
+        ambient_sld: Scattering length density of the ambient environment above the top most layer in units of 1e-6
             1/Å^2, e.g. ~0 for air.
         random_seed: Random seed for numpy.random.seed which affects the generation of the random labels (default 1).
         q_noise_spread: Standard deviation of the normal distribution of scaling factors (centered at 1) that are
@@ -73,7 +73,7 @@ class ReflectivityGenerator:
                 max roughness in units of Å for each sample interface in order from top (ambient/top layer) to bottom
                 (bottom layer/substrate).
             sld_ranges: An array-like object (list, tuple, ndarray, etc.) that contains a tuple with the min and max
-                scattering length density (SLD) in units of 1e+14 1/Å^2 for each sample layer in order from top to
+                scattering length density (SLD) in units of 1e-6 1/Å^2 for each sample layer in order from top to
                 bottom (excluding the ambient SLD).
             number_of_samples: Number of label sets that will be generated.
             distribution_type: Can be 'bolstered' (default) or 'uniform'.
