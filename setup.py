@@ -1,8 +1,9 @@
 from setuptools import setup, find_packages
+import mlreflect
 
 setup(
     name='mlreflect',
-    version='0.10.0',
+    version=mlreflect.__version__,
     author='Alessandro Greco',
     author_email='alessandro.greco@uni-tuebingen.de',
     license='GPL3',
