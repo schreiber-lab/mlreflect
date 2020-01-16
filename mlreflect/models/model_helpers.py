@@ -1,5 +1,4 @@
 import os
-from datetime import datetime
 
 from keras import callbacks as cb
 
@@ -17,9 +16,9 @@ def make_save_path(model_directory: str, time_stamp: str):
     dirname = os.path.dirname(model_directory)
     model_name = os.path.basename(model_directory)
     model_name_wo_ext = h5_tools.strip_file_extension(model_name)
-    
+
     save_directory = os.path.join(dirname, model_name_wo_ext, 'models')
-    
+
     create_save_directory(save_directory)
 
     path = os.path.join(save_directory, model_name_wo_ext + '_' + time_stamp + '.h5')
@@ -27,7 +26,6 @@ def make_save_path(model_directory: str, time_stamp: str):
 
 
 def make_tensorboard_callback(model_directory: str, time_stamp: str, graphs_subdirectory: str = 'tb_graphs'):
-
     dirname = os.path.dirname(model_directory)
     model_name = os.path.basename(model_directory)
     model_name_wo_ext = h5_tools.strip_file_extension(model_name)
