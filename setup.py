@@ -1,5 +1,9 @@
 from setuptools import setup, find_packages
+
 import mlreflect
+
+with open('requirements.txt') as file:
+    requirements = file.readlines()
 
 setup(
     name='mlreflect',
@@ -9,12 +13,5 @@ setup(
     license='GPL3',
     packages=find_packages(),
     zip_safe=False,
-    install_requires=[
-        'pandas',
-        'numpy',
-        'keras',
-        'h5py',
-        'tqdm',
-        'typing',
-    ]
+    install_requires=requirements
 )
