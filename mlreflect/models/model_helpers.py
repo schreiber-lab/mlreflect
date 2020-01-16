@@ -21,7 +21,7 @@ def make_save_path(model_directory: str, time_stamp: str):
 
     create_save_directory(save_directory)
 
-    path = os.path.join(save_directory, model_name_wo_ext + '_' + time_stamp + '.h5')
+    path = os.path.join(save_directory, time_stamp + '.h5')
     return path
 
 
