@@ -1,13 +1,12 @@
+from datetime import datetime
 from typing import Union
 
 import keras
 import numpy as np
-
-from datetime import datetime
 from numpy import ndarray
 from pandas import DataFrame
 
-from .model_helpers import make_tensorboard_callback, make_save_path, create_save_directory
+from .model_helpers import make_tensorboard_callback, make_save_path
 
 
 class SimpleModel:
