@@ -1,3 +1,6 @@
 .idea/
 data/notebooks/.ipynb_checkpoints/*
 mlreflect/__pycache__/
+build/
+dist/
+mlreflect.egg-info/
