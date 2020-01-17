@@ -11,6 +11,7 @@ The main dependencies can be install via pip via
 
 `pip install -r mlreflect/requirements.txt`
 
+## Usage example
 The package can then be imported in python using
 
 `import mlreflect`
@@ -19,6 +20,7 @@ or
 
 `from mlreflect import <module>`
 
+An example of how to generate training data, train the model and test it on experimental data is shown in the _usage_example.ipynb_ Jupyter notebook.
 
 ## Authors and contributors
 - Alessandro Greco (Institut für Angewandte Physik, University of Tübingen)
