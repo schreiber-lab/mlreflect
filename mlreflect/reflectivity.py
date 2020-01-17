@@ -11,12 +11,12 @@ def multilayer_reflectivity(q_values: Iterable, thickness: Iterable, roughness: 
         q_values: An array-like object (list, tuple, ndarray, etc.) that contains the q-values in SI units at which the
             reflected intensity will be simulated.
         thickness: An array-like object (list, tuple, ndarray, etc.) that contains the thicknesses of the sample layers
-            in SI units in order from top to bottom. The thickness of the bottom most layer (substrate) is not relevant
+            in SI units in order from bottom to top. The thickness of the bottom most layer (substrate) is not relevant
             for the simulation, but some value must be provided (e.g. 1).
         roughness: An array-like object (list, tuple, ndarray, etc.) that contains the roughnesses of the sample
-            interfaces in SI units in order from top (ambient/top layer) to bottom (bottom layer/substrate).
+            interfaces in SI units in order from bottom to top.
         scattering_length_density: An array-like object (list, tuple, ndarray, etc.) that contains the scattering
-            length densities of the sample layers in SI units in order from top to bottom (excluding the ambient SLD).
+            length densities of the sample layers in SI units in order from bottom to top (excluding the ambient SLD).
         ambient_sld: Scattering length density of the ambient environment (above the top most layer).
 
     Returns:
@@ -24,9 +24,9 @@ def multilayer_reflectivity(q_values: Iterable, thickness: Iterable, roughness: 
     """
 
     q_values = np.asarray(q_values)
-    thickness = np.asarray(thickness)
-    roughness = np.asarray(roughness)
-    scattering_length_density = np.asarray(scattering_length_density)
+    thickness = np.flip(np.asarray(thickness))
+    roughness = np.flip(np.asarray(roughness))
+    scattering_length_density = np.flip(np.asarray(scattering_length_density))
     ambient_sld = np.asarray(ambient_sld)
 
     if (len(thickness)) == len(roughness) == len(scattering_length_density):

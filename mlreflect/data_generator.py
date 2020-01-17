@@ -1,4 +1,4 @@
-from typing import Tuple, Iterable, Union, List
+from typing import Tuple, Union, List
 
 import numpy as np
 import pandas as pd
@@ -7,7 +7,8 @@ from pandas import DataFrame
 from scipy.special import erf
 from tqdm import tqdm
 
-from .label_names import make_label_names, convert_to_ndarray
+from .label_helpers import convert_to_ndarray
+from .layers import MultilayerStructure
 from .performance_tools import timer
 from .reflectivity import multilayer_reflectivity as refl
 
@@ -18,8 +19,7 @@ class ReflectivityGenerator:
     Args:
         q_values: An array-like object (list, tuple, ndarray, etc.) that contains the q-values in units of
             1/Å at which the reflected intensity will be simulated.
-        ambient_sld: Scattering length density of the ambient environment above the top most layer in units of 1e-6
-            1/Å^2, e.g. ~0 for air.
+        sample: MultilayerStructure object where the sample layers and their names and parameter ranges are defined.
         random_seed: Random seed for numpy.random.seed which affects the generation of the random labels (default 1).
         q_noise_spread: Standard deviation of the normal distribution of scaling factors (centered at 1) that are
             applied to each q-value during reflectivity simulation.
@@ -42,13 +42,13 @@ class ReflectivityGenerator:
         TrainingData object.
     """
 
-    def __init__(self, q_values: ndarray, ambient_sld: float, q_noise_spread: float = 0, shot_noise_spread: float = 0,
-                 background_noise_base_level: float = 0, background_noise_spread: float = 0, blur_width: float = 0,
-                 random_seed: int = 1):
+    def __init__(self, q_values: ndarray, sample: MultilayerStructure, q_noise_spread: float = 0,
+                 shot_noise_spread: float = 0, background_noise_base_level: float = 0,
+                 background_noise_spread: float = 0, blur_width: float = 0, random_seed: int = 1):
 
         np.random.seed(random_seed)
         self.q_values = np.asarray(q_values)
-        self.ambient_sld = ambient_sld
+        self.sample = sample
 
         self.q_noise_spread = q_noise_spread
         self.shot_noise_spread = shot_noise_spread
@@ -57,24 +57,11 @@ class ReflectivityGenerator:
         self.blur_width = blur_width
 
     @timer
-    def generate_random_labels(self, thickness_ranges: Iterable[Tuple[float, float]],
-                               roughness_ranges: Iterable[Tuple[float, float]],
-                               sld_ranges: Iterable[Tuple[float, float]], number_of_samples: int,
-                               distribution_type: str = 'bolstered', bolster_fraction: float = 0.15,
-                               bolster_width: float = 0.1) -> DataFrame:
-        """Generates random labels in the given parameter ranges and returns them as pandas DataFrame.
+    def generate_random_labels(self, number_of_samples: int, distribution_type: str = 'bolstered',
+                               bolster_fraction: float = 0.15, bolster_width: float = 0.1) -> DataFrame:
+        """Generates random labels in the parameter ranges defined by the sample and returns them as pandas DataFrame.
 
         Args:
-            thickness_ranges: An array-like object (list, tuple, ndarray, etc.) that contains a tuple with the min and
-                max thickness in units of Å for each sample layer in order from top to bottom. The thickness of the
-                bottom most layer (substrate) is not relevant for the simulation, but some value must be provided, e.g.
-                (1, 1).
-            roughness_ranges: An array-like object (list, tuple, ndarray, etc.) that contains a tuple with the min and
-                max roughness in units of Å for each sample interface in order from top (ambient/top layer) to bottom
-                (bottom layer/substrate).
-            sld_ranges: An array-like object (list, tuple, ndarray, etc.) that contains a tuple with the min and max
-                scattering length density (SLD) in units of 1e-6 1/Å^2 for each sample layer in order from top to
-                bottom (excluding the ambient SLD).
             number_of_samples: Number of label sets that will be generated.
             distribution_type: Can be 'bolstered' (default) or 'uniform'.
             bolster_fraction: Fraction of simulated samples that will be redistributed to the sides of the distribution.
@@ -84,16 +71,14 @@ class ReflectivityGenerator:
             labels: Pandas DataFrame with the randomly generated labels.
         """
 
-        thickness_ranges = np.asarray(thickness_ranges)
-        roughness_ranges = np.asarray(roughness_ranges)
-        sld_ranges = np.asarray(sld_ranges)
-
-        number_of_layers = len(thickness_ranges)
+        thickness_ranges = self.sample.get_thickness_ranges()
+        roughness_ranges = self.sample.get_roughness_ranges()
+        sld_ranges = self.sample.get_sld_ranges()
 
         if not number_of_samples > 0:
             raise ValueError('`number_of_samples` must be at least 1.')
 
-        label_names = make_label_names(number_of_layers)
+        label_names = self.sample.get_label_names()
 
         randomized_slds = self._generate_random_values(sld_ranges, number_of_samples, distribution_type,
                                                        bolster_fraction, bolster_width)
@@ -113,10 +98,9 @@ class ReflectivityGenerator:
 
         Args:
             labels: Must be ndarray or DataFrame with each column representing one label. The label order from left to
-            right must be "thickness", "roughness" and "scattering length density" with decreasing layer number
-            within each label.
-                Example for 2 layers: ['thickness_layer2', 'thickness_layer1', 'roughness_layer2', 'roughness_layer1',
-                'sld_layer2', 'sld_layer1']
+            right must be "thickness", "roughness" and "scattering length density" with layers from bottom to top.
+                Example for 2 layers: ['thickness_layer1', 'thickness_layer2', 'roughness_layer1', 'roughness_layer2',
+                'sld_layer1', 'sld_layer2']
 
         Returns:
             reflectivity_curves: Simulated reflectivity curves.
@@ -131,7 +115,7 @@ class ReflectivityGenerator:
         thicknesses_si = thicknesses * 1e-10
         roughnesses_si = roughnesses * 1e-10
         slds_si = slds * 1e14
-        ambient_sld_si = self.ambient_sld * 1e14
+        ambient_sld_si = self.sample.ambient_sld * 1e14
 
         q_values_si = self.q_values * 1e10
 
@@ -279,13 +263,12 @@ class ReflectivityGenerator:
 
         Args:
             labels: Must be ndarray or DataFrame with each column representing one label. The label order from left to
-            right must be "thickness", "roughness" and "scattering length density" with decreasing layer number
-            within each label.
-                Example for 2 layers: ['thickness_layer2', 'thickness_layer1', 'roughness_layer2', 'roughness_layer1',
-                'sld_layer2', 'sld_layer1']
+            right must be "thickness", "roughness" and "scattering length density" with layers from bottom to top.
+                Example for 2 layers: ['thickness_layer1', 'thickness_layer2', 'roughness_layer1', 'roughness_layer2',
+                'sld_layer1', 'sld_layer2']
 
         Returns:
-            sld_profiles: Simulated scattering length density profiles (real part).
+            sld_profiles: List of ndarrays of simulated scattering length density profiles (real part).
         """
 
         labels = convert_to_ndarray(labels)
@@ -294,16 +277,16 @@ class ReflectivityGenerator:
 
         thicknesses, roughnesses, slds = self.separate_labels(labels)
 
-        thicknesses = np.fliplr(thicknesses[:, :-1])
-        sld_substrate = slds[:, -1]
-        slds = np.fliplr(slds[:, :-1])
-        roughnesses = np.fliplr(roughnesses[:, :])
+        thicknesses = thicknesses[:, 1:]
+        sld_substrate = slds[:, 0]
+        slds = slds[:, 1:]
+        roughnesses = roughnesses[:, :]
 
         sld_profiles = []
 
         for i in tqdm(range(number_of_profiles)):
             height, profile = self.make_sld_profile(thicknesses[i, :], slds[i, :], roughnesses[i, :], sld_substrate[i],
-                                                    self.ambient_sld)
+                                                    self.sample.ambient_sld)
 
             this_profile = np.zeros((2, len(height)))
             this_profile[0, :] = height

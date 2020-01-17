@@ -6,7 +6,7 @@ from keras import Model
 from numpy import ndarray
 from pandas import DataFrame
 
-from .label_names import convert_to_dataframe
+from .label_helpers import convert_to_dataframe
 from .performance_tools import timer
 
 

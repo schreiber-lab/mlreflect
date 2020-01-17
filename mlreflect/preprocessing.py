@@ -1,11 +1,12 @@
-from typing import Iterable, Callable, Union, List, Tuple
+from typing import Iterable, Callable, Union, List
 from warnings import warn
 
 import numpy as np
 from numpy import ndarray
 from pandas import DataFrame
 
-from .label_names import make_label_names, convert_to_dataframe
+from .label_helpers import convert_to_dataframe
+from .layers import MultilayerStructure
 
 Jobfunc = Callable[[Iterable[float]], Iterable[float]]
 
@@ -111,15 +112,7 @@ class OutputPreprocessor:
     """Class for preprocessing reflectivity labels for training and validation.
 
     Args:
-        thickness_ranges: An array-like object (list, tuple, ndarray, etc.) that contains a tuple with the min and max
-            thickness in units of Å for each sample layer in order from top to bottom. The thickness of the bottom most
-            layer (substrate) is not relevant for the simulation, but some value must be provided, e.g. (1, 1).
-        roughness_ranges: An array-like object (list, tuple, ndarray, etc.) that contains a tuple with the min and max
-            roughness in units of Å for each sample interface in order from top (ambient/top layer) to bottom (bottom
-            layer/substrate).
-        sld_ranges: An array-like object (list, tuple, ndarray, etc.) that contains a tuple with the min and max
-            scattering length density (SLD) in units of 1e+14 1/Å^2 for each sample layer in order from top to bottom
-            (excluding the ambient SLD).
+        sample: MultilayerStructure object where the sample layers and their names and parameter ranges are defined.
 
     Returns:
         OutputPreprocessor object
@@ -134,8 +127,11 @@ class OutputPreprocessor:
         restore_labels()
     """
 
-    def __init__(self, thickness_ranges: List[Tuple[float, float]], roughness_ranges: List[Tuple[float, float]],
-                 sld_ranges: List[Tuple[float, float]]):
+    def __init__(self, sample: MultilayerStructure):
+
+        thickness_ranges = sample.get_thickness_ranges()
+        roughness_ranges = sample.get_roughness_ranges()
+        sld_ranges = sample.get_sld_ranges()
 
         self._thickness_ranges = np.asarray(thickness_ranges)
         self._roughness_ranges = np.asarray(roughness_ranges)
@@ -149,7 +145,7 @@ class OutputPreprocessor:
         self._number_of_layers = len(self._thickness_ranges)
         self._number_of_labels = len(self._label_ranges)
 
-        self.all_label_names = make_label_names(self._number_of_layers)
+        self.all_label_names = sample.get_label_names()
         self.normalized_label_names = []
         self.skipped_label_names = []
         self.constant_label_names = []
