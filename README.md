@@ -20,7 +20,7 @@ or
 
 `from mlreflect import <module>`
 
-An example of how to generate training data, train the model and test it on experimental data is shown in the _usage_example.ipynb_ Jupyter notebook.
+An example of how to generate training data, train the model and test it on experimental data is shown in the _data/notebooks/usage_example.ipynb_ Jupyter notebook.
 
 ## Authors and contributors
 - Alessandro Greco (Institut für Angewandte Physik, University of Tübingen)
