@@ -67,6 +67,7 @@ class MultilayerStructure:
         self.layers = []
 
     def add_layer(self, layer: Layer, index: Union[str, int] = 'next'):
+        """Add layer at given index position. If index='next' (default) layer is appended (added on top)."""
         if index == 'next':
             self.layers.append(layer)
         elif type(index) is int:
@@ -79,6 +80,7 @@ class MultilayerStructure:
         self.layers[layer_index].name = name
 
     def swap_layers(self, from_index: int, to_index: int):
+        """Swaps the position of the two layers given by `from_index` and `to_index`."""
         if type(from_index) is not int or type(to_index) is not int:
             raise ValueError('Indices must be integers')
 
@@ -87,6 +89,7 @@ class MultilayerStructure:
         self.layers[from_index] = swapped_value
 
     def move_layer(self, from_index: int, to_index: int):
+        """Moves layer with given index to new index, shifting all layers with equal or higher index up."""
         if type(from_index) is not int or type(to_index) is not int:
             raise ValueError('Indices must be integers')
 
@@ -99,6 +102,7 @@ class MultilayerStructure:
             self.layers.insert(to_index, moved_item)
 
     def get_thickness_ranges(self) -> ndarray:
+        """Get ndarray of tuples with min and max values of each layer thickness."""
         number_of_layers = len(self.layers)
 
         thickness_ranges = np.zeros((number_of_layers, 2))
@@ -110,6 +114,7 @@ class MultilayerStructure:
         return thickness_ranges
 
     def get_roughness_ranges(self) -> ndarray:
+        """Get ndarray of tuples with min and max values of each layer roughness."""
         number_of_layers = len(self.layers)
 
         roughness_ranges = np.zeros((number_of_layers, 2))
@@ -119,6 +124,7 @@ class MultilayerStructure:
         return roughness_ranges
 
     def get_sld_ranges(self) -> ndarray:
+        """Get ndarray of tuples with min and max values of each layer SLD."""
         number_of_layers = len(self.layers)
 
         sld_ranges = np.zeros((number_of_layers, 2))
@@ -128,6 +134,7 @@ class MultilayerStructure:
         return sld_ranges
 
     def get_label_names(self) -> List[str]:
+        """Get list of all layer names in order."""
         layer_names = [layer.name for layer in self.layers]
         number_of_layers = len(self.layers)
 
