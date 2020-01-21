@@ -50,6 +50,7 @@ class MultilayerStructure:
 
     Methods:
         add_layer()
+        rename_layer()
         swap_layers()
         move_layers()
         get_thickness_ranges()
@@ -72,6 +73,10 @@ class MultilayerStructure:
             self.layers.insert(index, layer)
         else:
             raise ValueError('position must be an integer index or "next"')
+
+    def rename_layer(self, layer_index, name):
+        """Renames layer at given index to `name`."""
+        self.layers[layer_index].name = name
 
     def swap_layers(self, from_index: int, to_index: int):
         if type(from_index) is not int or type(to_index) is not int:
