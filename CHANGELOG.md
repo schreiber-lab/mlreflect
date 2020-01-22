@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.12.1] - 2020-01-22
+
+### Added
+
+- Added CHANGELOG.md file to the project to track changes between releases
+- Added method MultilayerStructure.rename_layer()
+- Added docstrings to MultilayerStructure class
+
+### Changed
+- SimpleModel now returns tuple (hist, timestamp) instead of only hist
+
 ## [0.12.0] - 2020-01-17
 
 ### Added

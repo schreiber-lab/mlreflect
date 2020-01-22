@@ -5,7 +5,7 @@ from .prediction import Prediction
 from .preprocessing import InputPreprocessor, OutputPreprocessor
 from .reflectivity import multilayer_reflectivity
 
-__version__ = '0.12.0'
+__version__ = '0.12.1'
 
 __all__ = ['multilayer_reflectivity', 'Layer', 'MultilayerStructure', 'ReflectivityGenerator', 'InputPreprocessor',
            'OutputPreprocessor', 'Prediction', 'h5_tools']
