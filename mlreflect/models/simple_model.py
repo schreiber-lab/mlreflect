@@ -60,4 +60,4 @@ class SimpleModel:
         hist = self.model.fit(input_train, output_train, epochs=60, batch_size=256, verbose=1,
                               validation_data=(input_val, output_val),
                               callbacks=[checkpoint, tb_callback, lr_reduction])
-        return hist
+        return hist, time_stamp
