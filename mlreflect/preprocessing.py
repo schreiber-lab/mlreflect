@@ -127,7 +127,12 @@ class OutputPreprocessor:
         restore_labels()
     """
 
-    def __init__(self, sample: MultilayerStructure):
+    def __init__(self, sample: MultilayerStructure, normalization='min_to_zero'):
+        allowed_normalizations = ['min_to_zero', 'absolute_max']
+        if normalization in allowed_normalizations:
+            self.normalization = normalization
+        else:
+            raise ValueError(f'normalization type "{normalization}" not supported')
 
         thickness_ranges = sample.get_thickness_ranges()
         roughness_ranges = sample.get_roughness_ranges()
@@ -190,13 +195,16 @@ class OutputPreprocessor:
                 self.skipped_label_names.append(entry)
 
     def _normalize_labels(self, label_df: DataFrame) -> DataFrame:
-        """Normalizes all labels contained in `normalized_label_names` by their minimum and maximum values."""
+        """Normalizes all labels contained in `normalized_label_names`."""
 
         for name in label_df.columns:
             label_min = self._label_ranges_dict[name][0]
             label_max = self._label_ranges_dict[name][1]
             if label_max != label_min:
-                label_df[name] = (label_df[name] - label_min) / (label_max - label_min)
+                if self.normalization is 'min_to_zero':
+                    label_df[name] = (label_df[name] - label_min) / (label_max - label_min)
+                elif self.normalization is 'absolute_max':
+                    label_df[name] = label_df[name] / np.abs(label_max)
 
         self.normalized_label_names = list(label_df.columns)
 
@@ -239,7 +247,7 @@ class OutputPreprocessor:
         return reordered_labels_df
 
     def _renormalize_labels(self, label_df: DataFrame) -> DataFrame:
-        """Removes min-max normalization from all labels in `label_df` which are `normalized_label_names`."""
+        """Removes normalization from all labels in `label_df` which are `normalized_label_names`."""
         if not self.normalized_label_names:
             raise ValueError('No normalized labels. `_normalize_labels` must be called first.')
 
@@ -247,7 +255,10 @@ class OutputPreprocessor:
             label_min = self._label_ranges_dict[name][0]
             label_max = self._label_ranges_dict[name][1]
             if name not in self.constant_label_names:
-                label_df[name] = label_df[name] * (label_max - label_min) + label_min
+                if self.normalization is 'min_to_zero':
+                    label_df[name] = label_df[name] * (label_max - label_min) + label_min
+                elif self.normalization is 'absolute_max':
+                    label_df[name] = label_df[name] * np.abs(label_max)
 
         return label_df
 
