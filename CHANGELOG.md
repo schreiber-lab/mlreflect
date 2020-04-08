@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.12.2] - 2020-04-08
+
+### Changed
+
+- Changed all instances of keras to tensorflow.keras
+
 ## [0.12.1] - 2020-01-22
 
 ### Added

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Union
 
-import keras
+import tensorflow.keras as keras
 import numpy as np
 from numpy import ndarray
 from pandas import DataFrame

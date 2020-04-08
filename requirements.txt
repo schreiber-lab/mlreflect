@@ -1,3 +1,4 @@
+tensorflow
 scipy
 keras
 pandas

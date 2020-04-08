@@ -1,8 +1,8 @@
 from typing import Union, List
 
-import keras
+import tensorflow.keras as keras
 import numpy as np
-from keras import Model
+from tensorflow.keras import Model
 from numpy import ndarray
 from pandas import DataFrame
 
