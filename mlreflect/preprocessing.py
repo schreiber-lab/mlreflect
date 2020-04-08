@@ -20,7 +20,7 @@ class InputPreprocessor:
         InputPreprocessor object.
 
     Attributes:
-        job_list: List of all preprocessing jobs that will be applied in that order.
+        _job_list: List of all preprocessing jobs that will be applied in that order.
 
     Methods:
         append_to_job_list()
@@ -202,7 +202,7 @@ class OutputPreprocessor:
 
         return label_df
 
-    def _remove_labels(self, label_df: DataFrame, ) -> DataFrame:
+    def _remove_labels(self, label_df: DataFrame) -> DataFrame:
         """Removes labels in `removed_label_names` and `constant_label_names` from `label_df` and returns DataFrame."""
 
         removal_list = self.skipped_label_names + self.constant_label_names
