@@ -113,6 +113,9 @@ class OutputPreprocessor:
 
     Args:
         sample: MultilayerStructure object where the sample layers and their names and parameter ranges are defined.
+        normalization: Defines how the output labels are normalized.
+            "min_to_zero" (default): shifts minimum value to 0 and scales maximum value to 1 (= range [0, 1]).
+            "absolute_max": scales absolute maximum value to 1 (= range [-1, 1]).
 
     Returns:
         OutputPreprocessor object
@@ -127,7 +130,7 @@ class OutputPreprocessor:
         restore_labels()
     """
 
-    def __init__(self, sample: MultilayerStructure, normalization='min_to_zero'):
+    def __init__(self, sample: MultilayerStructure, normalization: str = 'min_to_zero'):
         allowed_normalizations = ['min_to_zero', 'absolute_max']
         if normalization in allowed_normalizations:
             self.normalization = normalization
