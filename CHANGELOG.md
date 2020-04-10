@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.13.0] - 2020-04-??
+
+### Added
+
+- Output normalization can now be changed from a [0, 1] range to a [-1, 1] range by choosing the approriate keyword for
+the `normalization` argument of the `OutputPreprocessor` class.
+
+### Changed 
+
 ## [0.12.2] - 2020-04-08
 
 ### Changed
