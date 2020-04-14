@@ -10,7 +10,8 @@ from tqdm import tqdm
 from .label_helpers import convert_to_ndarray
 from .layers import MultilayerStructure
 from .performance_tools import timer
-from .reflectivity import multilayer_reflectivity as refl
+from .reflectivity import multilayer_reflectivity as builtin_engine
+from refl1d.reflectivity import reflectivity as refl1d_engine
 
 
 class ReflectivityGenerator:
@@ -93,7 +94,7 @@ class ReflectivityGenerator:
         return labels
 
     @timer
-    def simulate_reflectivity(self, labels: Union[DataFrame, ndarray]) -> ndarray:
+    def simulate_reflectivity(self, labels: Union[DataFrame, ndarray], engine: str = 'refl1d') -> ndarray:
         """Simulates reflectivity curves for the given labels and returns them as ndarray.
 
         Args:
@@ -101,10 +102,16 @@ class ReflectivityGenerator:
             right must be "thickness", "roughness" and "scattering length density" with layers from bottom to top.
                 Example for 2 layers: ['thickness_layer1', 'thickness_layer2', 'roughness_layer1', 'roughness_layer2',
                 'sld_layer1', 'sld_layer2']
+            engine: 'refl1d' (default): Uses C++-based simulation from the refl1d package.
+                    'builtin': Uses the built-in python-based simulation (slower).
 
         Returns:
             reflectivity_curves: Simulated reflectivity curves.
         """
+        valid_engines = ('refl1d', 'builtin')
+        if engine not in valid_engines:
+            raise ValueError(f'"{engine}" not a valid engine')
+
         labels = convert_to_ndarray(labels)
 
         number_of_q_values = len(self.q_values)
@@ -112,20 +119,32 @@ class ReflectivityGenerator:
 
         thicknesses, roughnesses, slds = self.separate_labels(labels)
 
-        thicknesses_si = thicknesses * 1e-10
-        roughnesses_si = roughnesses * 1e-10
-        slds_si = slds * 1e14
-        ambient_sld_si = self.sample.ambient_sld * 1e14
-
-        q_values_si = self.q_values * 1e10
-
         reflectivity_curves = np.zeros([number_of_curves, number_of_q_values])
 
-        noisy_q_values = self._make_noisy_q_values(q_values_si, number_of_curves)
+        noisy_q_values = self._make_noisy_q_values(self.q_values, number_of_curves)
 
         for curve in tqdm(range(number_of_curves)):
-            reflectivity = refl(noisy_q_values[curve, :], thicknesses_si[curve, :], roughnesses_si[curve, :],
-                                slds_si[curve, :], ambient_sld_si)
+
+            if engine is 'refl1d':
+                depth = np.flip(np.concatenate((thicknesses[curve, :], [0])))
+                params = {'kz': noisy_q_values[curve, :] / 2, 'depth': depth, 'sigma': np.flip(roughnesses[curve, :])}
+                rho = np.flip(np.concatenate((slds[curve, :], [self.sample.ambient_sld])))
+                if np.sum(np.iscomplex(rho)) > 0:
+                    irho = rho.imag
+                    rho = rho.real
+                    params['irho'] = irho
+                params['rho'] = rho
+                
+                reflectivity = refl1d_engine(**params)
+            else:
+                thicknesses_si = thicknesses * 1e-10
+                roughnesses_si = roughnesses * 1e-10
+                slds_si = slds * 1e14
+                ambient_sld_si = self.sample.ambient_sld * 1e14
+                q_values_si = noisy_q_values * 1e10
+
+                reflectivity = builtin_engine(q_values_si[curve, :], thicknesses_si[curve, :], roughnesses_si[curve, :],
+                                              slds_si[curve, :], ambient_sld_si)
 
             reflectivity_noisy = self._apply_gaussian_blur(reflectivity)
             reflectivity_noisy = self._apply_shot_noise(reflectivity_noisy)
