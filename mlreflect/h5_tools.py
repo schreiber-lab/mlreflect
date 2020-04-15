@@ -10,7 +10,17 @@ from pandas import DataFrame
 
 
 def save_data_as_h5(file_name: str, q_values: ndarray, reflectivity: ndarray, labels: DataFrame, number_of_layers: int):
-    """Saves `q_values`, `reflectivity` and `labels` in the .5h file `file_name` in the group `group name`."""
+    """Saves `q_values`, `reflectivity` and `labels` in the .5h file `file_name`. Labels are saved as pandas DataFrame.
+
+        Args:
+            file_name: Name or path of the .h5 file
+            q_values: numpy array of q values in units 1/A
+            reflectivity: n-by-m numpy array of reflectivity curves where n is the number of curves and m the number of
+                q values
+            labels: pandas DataFrame of labels
+            number_of_layers: Number of thin film layers that were simulated (excluding ambient layer)
+
+    """
 
     file_name = ensure_h5_extension(file_name)
 
