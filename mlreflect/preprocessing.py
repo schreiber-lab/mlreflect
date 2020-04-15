@@ -1,4 +1,4 @@
-from typing import Iterable, Callable, Union, List
+from typing import Iterable, Callable, Union, List, Tuple
 from warnings import warn
 
 import numpy as np
@@ -133,7 +133,7 @@ class OutputPreprocessor:
 
         self.all_label_names = sample.get_label_names()
         self.normalized_label_names = []
-        self.skipped_label_names = []
+        self.removed_label_names = []
         self.constant_label_names = []
         self.used_label_names = []
 
@@ -147,19 +147,21 @@ class OutputPreprocessor:
             if label_min == label_max:
                 self.constant_label_names += [name]
 
-    def apply_preprocessing(self, labels: Union[DataFrame, ndarray]) -> DataFrame:
-        """Returns `labels` after normalizing and removing all labels defined in `removed_label_names` as DataFrame."""
+    def apply_preprocessing(self, labels: Union[DataFrame, ndarray]) -> Tuple[DataFrame, DataFrame]:
+        """Returns DataFrame of labels after normalization. Removes all constant labels and labels defined in
+        `removed_label_names` and returns them separately."""
         label_df = convert_to_dataframe(labels, self.all_label_names)
 
-        label_df = self._remove_labels(label_df)
-        label_df = self._normalize_labels(label_df)
+        preprocessed_labels = self._remove_labels(label_df.copy())
+        preprocessed_labels = self._normalize_labels(preprocessed_labels)
 
-        preprocessed_labels = label_df
+        removed_labels = label_df[self.removed_label_names + self.constant_label_names]
 
-        return preprocessed_labels
+        return preprocessed_labels, removed_labels
 
     def add_to_removal_list(self, label_name: Union[str, Iterable[str]]):
-        """Adds `label_name` to the list of removed labels. The names must be contained in `label_names`."""
+        """Adds `label_name` to the list of labels that are removed during preprocessing. The names must be contained in
+        `label_names`."""
         if type(label_name) is str:
             added_list = [label_name]
         elif type(label_name) is Iterable:
@@ -169,11 +171,11 @@ class OutputPreprocessor:
 
         for entry in added_list:
             if entry not in self.all_label_names:
-                warn(f'{entry} not in `label_names` and it will be skipped.')
-            elif entry in self.skipped_label_names:
-                warn(f'{entry} already in `removed_label_names` and it will be skipped.')
+                warn(f'{entry} not in `label_names` and it will be ignored.')
+            elif entry in self.removed_label_names:
+                warn(f'{entry} already in `removed_label_names` and it will be ignored.')
             else:
-                self.skipped_label_names.append(entry)
+                self.removed_label_names.append(entry)
 
     def _normalize_labels(self, label_df: DataFrame) -> DataFrame:
         """Normalizes all labels contained in `normalized_label_names`."""
@@ -194,7 +196,7 @@ class OutputPreprocessor:
     def _remove_labels(self, label_df: DataFrame) -> DataFrame:
         """Removes labels in `removed_label_names` and `constant_label_names` from `label_df` and returns DataFrame."""
 
-        removal_list = self.skipped_label_names + self.constant_label_names
+        removal_list = self.removed_label_names + self.constant_label_names
         for name in removal_list:
             if name not in label_df.columns:
                 warn(f'Label "{name}" not in the list of labels (maybe already removed). Skipping "{name}".')
@@ -207,28 +209,28 @@ class OutputPreprocessor:
 
     def _make_used_label_names(self):
         used_label_names = self.all_label_names.copy()
-        removed_list = self.constant_label_names + self.skipped_label_names
+        removed_list = self.constant_label_names + self.removed_label_names
         for name in removed_list:
             used_label_names.remove(name)
 
         return used_label_names
 
     def restore_labels(self, predicted_labels: Union[DataFrame, ndarray],
-                       training_labels: Union[ndarray, DataFrame]) -> DataFrame:
-        """Takes the predicted labels, reverts normalization and adds removed labels and returns those as DataFrame."""
+                       removed_labels: Union[ndarray, DataFrame]) -> DataFrame:
+        """Takes the predicted labels, reverts normalization and adds constant labels and returns those as DataFrame."""
 
         predicted_labels_df = convert_to_dataframe(predicted_labels, self.used_label_names)
-        training_labels_df = convert_to_dataframe(training_labels, self.all_label_names)
+        removed_labels_df = convert_to_dataframe(removed_labels, self.removed_label_names)
 
         restored_labels_df = self._renormalize_labels(predicted_labels_df)
-        restored_labels_df = self._add_removed_labels(restored_labels_df, training_labels_df)
+        restored_labels_df = self._add_constant_labels(restored_labels_df, removed_labels_df)
 
         reordered_labels_df = restored_labels_df[self.all_label_names]
 
         return reordered_labels_df
 
     def _renormalize_labels(self, label_df: DataFrame) -> DataFrame:
-        """Removes normalization from all labels in `label_df` which are `normalized_label_names`."""
+        """Removes normalization from all labels in `label_df` which are in `normalized_label_names`."""
         if not self.normalized_label_names:
             raise ValueError('No normalized labels. `_normalize_labels` must be called first.')
 
@@ -243,10 +245,10 @@ class OutputPreprocessor:
 
         return label_df
 
-    def _add_removed_labels(self, predicted_labels_df: DataFrame, training_labels_df: DataFrame) -> DataFrame:
-        """Adds all labels in `removed_label_names` from `training_labels_df` to `predicted_labels_df`."""
-        removal_list = self.constant_label_names + self.skipped_label_names
-        for name in removal_list:
-            predicted_labels_df[name] = training_labels_df[name].reset_index(drop=True)
+    def _add_constant_labels(self, predicted_labels_df: DataFrame, removed_labels_df: DataFrame) -> DataFrame:
+        """Adds all labels in `constant_label_names` from `removed_labels_df` to `predicted_labels_df`."""
+        constant_label_list = self.constant_label_names
+        for name in constant_label_list:
+            predicted_labels_df[name] = removed_labels_df[name].reset_index(drop=True)
 
         return predicted_labels_df
