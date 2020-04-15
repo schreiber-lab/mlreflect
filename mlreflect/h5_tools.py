@@ -27,40 +27,38 @@ def save_data_as_h5(file_name: str, q_values: ndarray, reflectivity: ndarray, la
     number_of_curves = labels.shape[0]
 
     with h5py.File(file_name, 'a') as data_file:
-        data_file.attrs['q_unit'] = '1/A'
         create_dataset_with_override(data_file, 'q_values', q_values)
 
-        data_file.attrs['number_of_layers'] = number_of_layers
-
-        main_group = data_file.require_group(group_name)
-
-        info = main_group.require_group('info')
-
+        info = data_file.require_group('info')
+        info.attrs['number_of_layers'] = number_of_layers
         info.attrs['num_curves'] = number_of_curves
+
+        info.attrs['q_unit'] = '1/A'
+        info.attrs['thickness_unit'] = 'A'
+        info.attrs['roughness_uni'] = 'A'
+        info.attrs['sld_unit'] = '1e-6 1/A^2'
 
         for label_name in labels.keys():
             info.attrs[label_name + '_min'] = labels[label_name].min()
             info.attrs[label_name + '_max'] = labels[label_name].max()
 
-        data_group = main_group.require_group('data')
+        create_dataset_with_override(data_file, 'reflectivity', reflectivity)
 
-        create_dataset_with_override(data_group, 'reflectivity', reflectivity)
-
-    labels.to_hdf(file_name, group_name + '/data/labels')
+    labels.to_hdf(file_name, 'labels')
 
 
-def read_from_h5(file_name: str, group_name: str):
-    """Reads reflectivity and labels from group `group_name` in h5 file `file_name` and returns them in a dict."""
+def read_from_h5(file_name: str) -> dict:
+    """Reads all data in h5 file `file_name` and returns them in a dict."""
     with h5py.File(file_name, 'r') as data_file:
         q_values = np.array(data_file.get('q_values'))
 
-        reflectivity = np.array(data_file.get(group_name + '/data/reflectivity'))
+        reflectivity = np.array(data_file.get('reflectivity'))
 
-        labels = pd.read_hdf(file_name, group_name + '/data/labels')
+        labels = pd.read_hdf(file_name, 'labels')
 
         info = {}
-        for key in data_file.get(group_name + '/info').attrs.keys():
-            info[key] = np.array(data_file.get(group_name + '/info').attrs[key])
+        for key in data_file.get('info').attrs.keys():
+            info[key] = np.array(data_file.get('info').attrs[key])
 
     return {'q_values': q_values, 'reflectivity': reflectivity, 'labels': labels, 'info': info}
 
