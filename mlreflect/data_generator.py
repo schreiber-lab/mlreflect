@@ -31,13 +31,6 @@ class ReflectivityGenerator:
         blur_width: Standard deviation of the gaussian blur in units of 1/Å that is applied to simulated reflectivity
         curves to simulate the slit function. If blur_width = 0 (default) no blur is  applied.
 
-    Methods:
-        generate_random_labels()
-        simulate_reflectivity()
-        simulate_sld_profiles()
-        make_sld_profile()
-        separate_labels()
-
     Returns:
         TrainingData object.
     """

@@ -48,16 +48,6 @@ class MultilayerStructure:
         ambient_sld: Scattering length density of the ambient environment above the top most layer in units of 1e-6
         1/Å^2, e.g. ~0 for X-rays in air.
 
-    Methods:
-        add_layer()
-        rename_layer()
-        swap_layers()
-        move_layers()
-        get_thickness_ranges()
-        get_roughness_ranges()
-        get_sld_ranges()
-        get_label_names()
-
     Returns:
         MultilayerStructure object
     """

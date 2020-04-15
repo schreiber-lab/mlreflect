@@ -18,17 +18,6 @@ class InputPreprocessor:
 
     Returns:
         InputPreprocessor object.
-
-    Attributes:
-        _job_list: List of all preprocessing jobs that will be applied in that order.
-
-    Methods:
-        append_to_job_list()
-        reset_list()
-        apply_preprocessing()
-        log()
-        standardize()
-        reset_standardization()
     """
 
     def __init__(self):
@@ -119,15 +108,6 @@ class OutputPreprocessor:
 
     Returns:
         OutputPreprocessor object
-
-    Properties:
-        all_label_names: List of names of all labels.
-        skipped_label_names: List of names of all labels that will be removed by `apply_preprocessing`.
-
-    Methods:
-        apply_preprocessing()
-        add_to_removal_list()
-        restore_labels()
     """
 
     def __init__(self, sample: MultilayerStructure, normalization: str = 'min_to_zero'):
