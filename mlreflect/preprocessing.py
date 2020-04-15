@@ -8,11 +8,9 @@ from pandas import DataFrame
 from .label_helpers import convert_to_dataframe
 from .layers import MultilayerStructure
 
-Jobfunc = Callable[[Iterable[float]], Iterable[float]]
-
 
 class InputPreprocessor:
-    """Class that stores a list of preprocessing functions ('jobs') that can be executed on reflectivity input data.
+    """Allows standardization while storing mean and standard deviation for later use.
 
     Args: None
 
@@ -21,56 +19,10 @@ class InputPreprocessor:
     """
 
     def __init__(self):
-        self._job_list = []
         self._standard_mean = None
         self._standard_std = None
 
         self._has_saved_standardization = False
-
-    @property
-    def job_list(self):
-        return self._job_list
-
-    def append_to_job_list(self, function: Union[Jobfunc, List[Jobfunc]]):
-        """Adds a function or list of functions to the job list for preprocessing.
-
-        Args:
-            function: Any function or list of functions that can be applied to the input data. The function must take
-            no arguments except an ndarray of the data and only return the modified data with the same shape and type.
-
-        Returns: None
-        """
-        if type(function) is list:
-            for entry in function:
-                if not callable(entry):
-                    raise TypeError(f'List entry {entry} not callable.')
-            self._job_list += function
-        elif callable(function):
-            self._job_list += [function]
-        else:
-            raise TypeError('Provided argument not callable.')
-
-    def reset_list(self):
-        """Removes all current functions from the job list."""
-        self._job_list = []
-
-    def apply_preprocessing(self, data: ndarray) -> ndarray:
-        """Executes all functions on the job list. Subsequent functions take the previous return value as argument.
-
-        Args:
-            data: numpy.ndarray input data with dimensions [number_of_curves, number_of_q_values].
-
-        Returns:
-              Preprocessed data.
-        """
-        for job in self.job_list:
-            data = job(data)
-        return data
-
-    @staticmethod
-    def log(data: ndarray) -> ndarray:
-        """Shortcut for numpy.log function."""
-        return np.log(data)
 
     def standardize(self, data: ndarray) -> ndarray:
         """Applies standardization along axis 0 and returns standardized data. Mean and std will be reused."""
