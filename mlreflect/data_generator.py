@@ -1,4 +1,4 @@
-from typing import Tuple, Union, List
+from typing import Tuple, List
 
 import numpy as np
 import pandas as pd
@@ -7,7 +7,6 @@ from pandas import DataFrame
 from scipy.special import erf
 from tqdm import tqdm
 
-from .label_helpers import convert_to_ndarray
 from .layers import MultilayerStructure
 from .performance_tools import timer
 from .reflectivity import multilayer_reflectivity as refl
