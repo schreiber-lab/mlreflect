@@ -22,20 +22,20 @@ class Layer:
     def __init__(self, name: str, thickness_range: Tuple, roughness_range: Tuple, sld_range: Tuple):
         self.name = name
 
-        self.min_thickness = thickness_range[0]
-        self.max_thickness = thickness_range[1]
-
-        self.min_roughness = roughness_range[0]
-        self.max_roughness = roughness_range[1]
-
-        self.min_sld = sld_range[0]
-        self.max_sld = sld_range[1]
+        self.ranges = {
+            'min_thickness': thickness_range[0],
+            'max_thickness': thickness_range[1],
+            'min_roughness': roughness_range[0],
+            'max_roughness': roughness_range[1],
+            'min_sld': sld_range[0],
+            'max_sld': sld_range[1],
+        }
 
     def __str__(self):
         return f'{self.name}:\n' \
-               f'\tthickness: {self.min_thickness} -- {self.max_thickness} [Å]\n' \
-               f'\troughness: {self.min_roughness} -- {self.max_roughness} [Å]\n' \
-               f'\tsld: {self.min_sld} -- {self.max_sld} [1e-6 1/Å^2]'
+               f'\tthickness: {self.ranges["min_thickness"]} -- {self.ranges["max_thickness"]} [Å]\n' \
+               f'\troughness: {self.ranges["min_roughness"]} -- {self.ranges["max_roughness"]} [Å]\n' \
+               f'\tsld: {self.ranges["min_sld"]} -- {self.ranges["max_sld"]} [1e-6 1/Å^2]'
 
     def __repr__(self):
         return self.name
@@ -45,15 +45,15 @@ class MultilayerStructure:
     """Defines the structure of a multilayer sample through one or multiple Layer objects and an ambient SLD.
 
     Args:
-        ambient_sld: Scattering length density of the ambient environment above the top most layer in units of 1e-6
-        1/Å^2, e.g. ~0 for X-rays in air.
+        ambient_sld_range: Tuple that contains min and max scattering length density of the ambient environment above the top
+        most layer in units of 1e-6 1/Å^2, e.g. ~0 for X-rays in air.
 
     Returns:
         MultilayerStructure object
     """
 
-    def __init__(self, ambient_sld: float):
-        self.ambient_sld = ambient_sld
+    def __init__(self, ambient_sld_range: Tuple):
+        self.ambient_sld_range = ambient_sld_range
         self.layers = []
 
     def add_layer(self, layer: Layer, index: Union[str, int] = 'next'):
@@ -93,35 +93,31 @@ class MultilayerStructure:
 
     def get_thickness_ranges(self) -> ndarray:
         """Get ndarray of tuples with min and max values of each layer thickness."""
-        number_of_layers = len(self.layers)
-
-        thickness_ranges = np.zeros((number_of_layers, 2))
-        for i in reversed(range(number_of_layers)):
-            thickness_ranges[i, :] = np.asarray((self.layers[i].min_thickness, self.layers[i].max_thickness))
-
-        thickness_ranges[0] = (1, 1)
+        thickness_ranges = self._get_min_max_ranges('thickness')
+        thickness_ranges[0] = (1, 1)  # set substrate thickness to 1 (arbitrary)
 
         return thickness_ranges
 
     def get_roughness_ranges(self) -> ndarray:
         """Get ndarray of tuples with min and max values of each layer roughness."""
-        number_of_layers = len(self.layers)
+        return self._get_min_max_ranges('roughness')
 
-        roughness_ranges = np.zeros((number_of_layers, 2))
-        for i in reversed(range(number_of_layers)):
-            roughness_ranges[i, :] = np.asarray((self.layers[i].min_roughness, self.layers[i].max_roughness))
-
-        return roughness_ranges
-
-    def get_sld_ranges(self) -> ndarray:
+    def get_layer_sld_ranges(self) -> ndarray:
         """Get ndarray of tuples with min and max values of each layer SLD."""
+        return self._get_min_max_ranges('sld')
+
+    def _get_min_max_ranges(self, label: str) -> ndarray:
         number_of_layers = len(self.layers)
 
-        sld_ranges = np.zeros((number_of_layers, 2))
+        ranges = np.zeros((number_of_layers, 2))
         for i in reversed(range(number_of_layers)):
-            sld_ranges[i, :] = np.asarray((self.layers[i].min_sld, self.layers[i].max_sld))
+            ranges[i, :] = np.asarray((self.layers[i].ranges['min_' + label], self.layers[i].ranges['max_' + label]))
 
-        return sld_ranges
+        return ranges
+
+    def get_ambient_sld_ranges(self):
+        """Get ndarray of tuples with min and max values of ambient SLD."""
+        return np.asarray([self.ambient_sld_range])
 
     def get_label_names(self) -> List[str]:
         """Get list of all layer names in order."""
@@ -137,10 +133,12 @@ class MultilayerStructure:
             label_names[
                 layer_index + 2 * number_of_layers] = f'{layer_names[layer_index]}_sld'
 
+        label_names.append('ambient_sld')
+
         return label_names
 
     def __str__(self):
-        output = f'ambient_sld: {self.ambient_sld} [1e-6 1/Å^2]\n'
+        output = f'ambient_sld: {self.ambient_sld_range[0]}  -- {self.ambient_sld_range[1]} [1e-6 1/Å^2]\n'
         for i in reversed(range(len(self.layers))):
             output += f'[{i}] {self.layers[i]}\n'
         return output

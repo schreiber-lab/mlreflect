@@ -117,15 +117,13 @@ class OutputPreprocessor:
         else:
             raise ValueError(f'normalization type "{normalization}" not supported')
 
-        thickness_ranges = sample.get_thickness_ranges()
-        roughness_ranges = sample.get_roughness_ranges()
-        sld_ranges = sample.get_sld_ranges()
+        self._thickness_ranges = sample.get_thickness_ranges()
+        self._roughness_ranges = sample.get_roughness_ranges()
+        self.layer_sld_ranges = sample.get_layer_sld_ranges()
+        self.ambient_sld_range = sample.get_ambient_sld_ranges()
 
-        self._thickness_ranges = np.asarray(thickness_ranges)
-        self._roughness_ranges = np.asarray(roughness_ranges)
-        self.ranges = np.asarray(sld_ranges)
-
-        self._label_ranges = np.concatenate((self._thickness_ranges, self._roughness_ranges, self.ranges), axis=0)
+        self._label_ranges = np.concatenate((self._thickness_ranges, self._roughness_ranges, self.layer_sld_ranges,
+                                             self.ambient_sld_range), axis=0)
 
         self._labels_min = self._label_ranges[:, 0]
         self._labels_max = self._label_ranges[:, 1]

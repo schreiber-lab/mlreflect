@@ -66,49 +66,53 @@ class ReflectivityGenerator:
 
         thickness_ranges = self.sample.get_thickness_ranges()
         roughness_ranges = self.sample.get_roughness_ranges()
-        sld_ranges = self.sample.get_sld_ranges()
+        layer_sld_ranges = self.sample.get_layer_sld_ranges()
+        ambient_sld_ranges = self.sample.get_ambient_sld_ranges()
 
         if not number_of_samples > 0:
             raise ValueError('`number_of_samples` must be at least 1.')
 
         label_names = self.sample.get_label_names()
 
-        randomized_slds = self._generate_random_values(sld_ranges, number_of_samples, distribution_type,
-                                                       bolster_fraction, bolster_width)
+        randomized_layer_slds = self._generate_random_values(layer_sld_ranges, number_of_samples, distribution_type,
+                                                             bolster_fraction, bolster_width)
+        randomized_ambient_slds = self._generate_random_values(ambient_sld_ranges, number_of_samples, distribution_type,
+                                                               bolster_fraction, bolster_width)
         randomized_thicknesses = self._generate_random_values(thickness_ranges, number_of_samples, distribution_type,
                                                               bolster_fraction, bolster_width)
         randomized_roughnesses = self._generate_random_roughness_from_thickness(roughness_ranges,
                                                                                 randomized_thicknesses)
 
-        labels = np.concatenate((randomized_thicknesses, randomized_roughnesses, randomized_slds), axis=1)
+        labels = np.concatenate(
+            (randomized_thicknesses, randomized_roughnesses, randomized_layer_slds, randomized_ambient_slds), axis=1)
         labels = pd.DataFrame(data=labels, columns=label_names)
 
         return labels
 
     @timer
-    def simulate_reflectivity(self, labels: Union[DataFrame, ndarray]) -> ndarray:
-        """Simulates reflectivity curves for the given labels and returns them as ndarray.
-
-        Args:
-            labels: Must be ndarray or DataFrame with each column representing one label. The label order from left to
+    def simulate_reflectivity(self, labels: DataFrame) -> ndarray:
+        """Simulates reflectivity curves for the given labels and returns them as ndarray. The label order from left to
             right must be "thickness", "roughness" and "scattering length density" with layers from bottom to top.
                 Example for 2 layers: ['thickness_layer1', 'thickness_layer2', 'roughness_layer1', 'roughness_layer2',
                 'sld_layer1', 'sld_layer2']
 
+        Args:
+            labels: Must a pandas DataFrame with each column representing one label.
+
         Returns:
             reflectivity_curves: Simulated reflectivity curves.
         """
-        labels = convert_to_ndarray(labels)
+        if type(labels) is not DataFrame:
+            raise TypeError(f'labels must be provided as a pandas DataFrame')
 
         number_of_q_values = len(self.q_values)
         number_of_curves = labels.shape[0]
 
-        thicknesses, roughnesses, slds = self.separate_labels(labels)
+        thicknesses, roughnesses, slds = self.separate_labels_by_category(labels)
 
         thicknesses_si = thicknesses * 1e-10
         roughnesses_si = roughnesses * 1e-10
         slds_si = slds * 1e14
-        ambient_sld_si = self.sample.ambient_sld * 1e14
 
         q_values_si = self.q_values * 1e10
 
@@ -118,7 +122,7 @@ class ReflectivityGenerator:
 
         for curve in tqdm(range(number_of_curves)):
             reflectivity = refl(noisy_q_values[curve, :], thicknesses_si[curve, :], roughnesses_si[curve, :],
-                                slds_si[curve, :], ambient_sld_si)
+                                slds_si[curve, :-1], slds_si[curve, -1])
 
             reflectivity_noisy = self._apply_gaussian_blur(reflectivity)
             reflectivity_noisy = self._apply_shot_noise(reflectivity_noisy)
@@ -250,12 +254,32 @@ class ReflectivityGenerator:
         roughness = thickness / 2
         return roughness
 
+    @staticmethod
+    def separate_labels_by_category(labels: DataFrame) -> Tuple[ndarray, ndarray, ndarray]:
+        thicknesses = []
+        roughnesses = []
+        slds = []
+
+        for name in labels.columns:
+            if 'thickness' in name:
+                thicknesses.append(labels[name])
+            elif 'roughness' in name:
+                roughnesses.append(labels[name])
+            elif 'sld' in name:
+                slds.append(labels[name])
+
+        thicknesses = np.array(thicknesses).T
+        roughnesses = np.array(roughnesses).T
+        slds = np.array(slds).T
+
+        return thicknesses, roughnesses, slds
+
     @timer
-    def simulate_sld_profiles(self, labels: Union[DataFrame, ndarray]) -> List[ndarray]:
+    def simulate_sld_profiles(self, labels: DataFrame) -> List[ndarray]:
         """Simulates real scattering length density profiles for the given labels and returns them as ndarray.
 
         Args:
-            labels: Must be ndarray or DataFrame with each column representing one label. The label order from left to
+            labels: Must be pandas DataFrame with each column representing one label. The label order from left to
             right must be "thickness", "roughness" and "scattering length density" with layers from bottom to top.
                 Example for 2 layers: ['thickness_layer1', 'thickness_layer2', 'roughness_layer1', 'roughness_layer2',
                 'sld_layer1', 'sld_layer2']
@@ -263,23 +287,24 @@ class ReflectivityGenerator:
         Returns:
             sld_profiles: List of ndarrays of simulated scattering length density profiles (real part).
         """
-
-        labels = convert_to_ndarray(labels)
+        if len(labels.shape) is not 2:
+            raise ValueError('labels dataframe must have 2 dimensions (#samples, #labels_per_sample)')
 
         number_of_profiles = labels.shape[0]
 
-        thicknesses, roughnesses, slds = self.separate_labels(labels)
+        thicknesses, roughnesses, slds = self.separate_labels_by_category(labels)
 
         thicknesses = thicknesses[:, 1:]
         sld_substrate = slds[:, 0]
-        slds = slds[:, 1:]
+        slds = slds[:, 1:-1]
+        sld_ambient = slds[:, -1]
         roughnesses = roughnesses[:, :]
 
         sld_profiles = []
 
         for i in tqdm(range(number_of_profiles)):
             height, profile = self.make_sld_profile(thicknesses[i, :], slds[i, :], roughnesses[i, :], sld_substrate[i],
-                                                    self.sample.ambient_sld)
+                                                    sld_ambient[i])
 
             this_profile = np.zeros((2, len(height)))
             this_profile[0, :] = height
@@ -346,14 +371,3 @@ class ReflectivityGenerator:
         profile *= difference / 2
 
         return profile
-
-    @staticmethod
-    def separate_labels(labels: ndarray) -> Tuple[ndarray, ndarray, ndarray]:
-        number_of_labels = labels.shape[1]
-        number_of_layers = int(number_of_labels / 3)
-
-        thicknesses = labels[:, :number_of_layers]
-        roughnesses = labels[:, number_of_layers:2 * number_of_layers]
-        slds = labels[:, 2 * number_of_layers:3 * number_of_layers]
-
-        return thicknesses, roughnesses, slds
