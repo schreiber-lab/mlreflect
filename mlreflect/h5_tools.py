@@ -9,12 +9,11 @@ from numpy import ndarray
 from pandas import DataFrame
 
 
-def save_data_as_h5(file_name: str, group_name: str, q_values: ndarray, reflectivity: ndarray, labels: DataFrame):
+def save_data_as_h5(file_name: str, q_values: ndarray, reflectivity: ndarray, labels: DataFrame, number_of_layers: int):
     """Saves `q_values`, `reflectivity` and `labels` in the .5h file `file_name` in the group `group name`."""
 
     file_name = ensure_h5_extension(file_name)
 
-    number_of_layers = labels.shape[1] * 3
     number_of_curves = labels.shape[0]
 
     with h5py.File(file_name, 'a') as data_file:
