@@ -23,31 +23,17 @@ class ReflectivityGenerator:
         random_seed: Random seed for numpy.random.seed which affects the generation of the random labels (default 1).
         q_noise_spread: Standard deviation of the normal distribution of scaling factors (centered at 1) that are
             applied to each q-value during reflectivity simulation.
-        shot_noise_spread: Scaling factor c for the standard deviation sqrt(I*c) of the shot noise around the intensity
-            of simulated reflectivity curves. Since the intensity is normalized, this is equivalent to setting the
-            number of photon counts N = 1/c.
-        background_noise_base_level: Constant background intensity that is added to reflectivity simulations.
-        background_noise_spread: Standard deviation of the background intensity centered at background_noise_base_level.
-        blur_width: Standard deviation of the gaussian blur in units of 1/Å that is applied to simulated reflectivity
-        curves to simulate the slit function. If blur_width = 0 (default) no blur is  applied.
 
     Returns:
         TrainingData object.
     """
 
-    def __init__(self, q_values: ndarray, sample: MultilayerStructure, q_noise_spread: float = 0,
-                 shot_noise_spread: float = 0, background_noise_base_level: float = 0,
-                 background_noise_spread: float = 0, blur_width: float = 0, random_seed: int = 1):
+    def __init__(self, q_values: ndarray, sample: MultilayerStructure, q_noise_spread: float = 0, random_seed: int = 1):
 
         np.random.seed(random_seed)
         self.q_values = np.asarray(q_values)
         self.sample = sample
-
         self.q_noise_spread = q_noise_spread
-        self.shot_noise_spread = shot_noise_spread
-        self.background_noise_base_level = background_noise_base_level
-        self.background_noise_spread = background_noise_spread
-        self.blur_width = blur_width
 
     @timer
     def generate_random_labels(self, number_of_samples: int, distribution_type: str = 'bolstered',
@@ -153,36 +139,11 @@ class ReflectivityGenerator:
                                               slds_si[curve, :-1], slds_si[curve, -1])
                 reflectivity_curves[curve, :] = reflectivity
 
-        # reflectivity_noisy = self._apply_gaussian_blur(reflectivity)
-        # reflectivity_noisy = self._apply_shot_noise(reflectivity_noisy)
-        # reflectivity_noisy = self._apply_background_noise(reflectivity_noisy)
-
         return reflectivity_curves
 
     def _make_noisy_q_values(self, q_values: ndarray, number_of_curves: int) -> ndarray:
         percentage_deviation = np.random.normal(1, self.q_noise_spread, (number_of_curves, len(q_values)))
         return q_values * percentage_deviation
-
-    def _apply_shot_noise(self, reflectivity_curve: ndarray) -> ndarray:
-        noisy_reflectivity = np.clip(
-            np.random.normal(reflectivity_curve, np.sqrt(reflectivity_curve * self.shot_noise_spread)), 1e-8, None)
-
-        return noisy_reflectivity
-
-    def _apply_background_noise(self, reflectivity_curve: ndarray) -> ndarray:
-        num_q_values = len(reflectivity_curve)
-        background = np.random.normal(self.background_noise_base_level, self.background_noise_spread, num_q_values)
-
-        return reflectivity_curve + background
-
-    def _apply_gaussian_blur(self, reflectivity_curve: ndarray) -> ndarray:
-        sigma = self.blur_width
-        if sigma == 0:
-            return reflectivity_curve
-
-        gaussian, _ = self._make_gaussian(self.q_values, self.blur_width)
-        blurred_reflectivity = np.convolve(reflectivity_curve, gaussian, 'same')
-        return blurred_reflectivity
 
     @staticmethod
     def _make_gaussian(x: ndarray, std: float, n_std: float = 5):
