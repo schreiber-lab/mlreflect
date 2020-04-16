@@ -123,11 +123,6 @@ class ReflectivityGenerator:
 
         noisy_q_values = self._make_noisy_q_values(self.q_values, number_of_curves)
 
-        thicknesses_si = thicknesses * 1e-10
-        roughnesses_si = roughnesses * 1e-10
-        slds_si = slds * 1e14
-        q_values_si = noisy_q_values * 1e10
-
         if engine is 'refl1d':
             depth = np.fliplr(thicknesses)
             depth = np.hstack((np.ones((number_of_curves, 1)), depth))
@@ -148,6 +143,11 @@ class ReflectivityGenerator:
                 del params
                 reflectivity_curves[curve, :] = reflectivity
         else:
+            thicknesses_si = thicknesses * 1e-10
+            roughnesses_si = roughnesses * 1e-10
+            slds_si = slds * 1e14
+            q_values_si = noisy_q_values * 1e10
+
             for curve in tqdm(range(number_of_curves)):
                 reflectivity = builtin_engine(q_values_si[curve, :], thicknesses_si[curve, :], roughnesses_si[curve, :],
                                               slds_si[curve, :-1], slds_si[curve, -1])
@@ -226,8 +226,8 @@ class ReflectivityGenerator:
 
         return randomized_labels
 
-    def _bolstered_uniform_distribution(self, value_min: float, value_max: float, n_samples: int, bolster_fraction:
-    float, bolster_width: float) -> ndarray:
+    def _bolstered_uniform_distribution(self, value_min: float, value_max: float, n_samples: int,
+                                        bolster_fraction: float, bolster_width: float) -> ndarray:
         span = value_max - value_min
 
         n_bolster = int(np.floor(n_samples * bolster_fraction / 2))
