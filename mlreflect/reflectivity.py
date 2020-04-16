@@ -72,7 +72,7 @@ def multilayer_reflectivity(q_values: Iterable, thickness: Iterable, roughness: 
     for n in range(len(r)):
         r[n] = total_reflectivity_matrix[0, 1, n] / total_reflectivity_matrix[1, 1, n]
 
-    reflectivity = abs(r) ** 2
+    reflectivity = np.clip(abs(r) ** 2, None, 1)
     reflectivity.reshape(len(reflectivity), 1)
 
     return reflectivity
