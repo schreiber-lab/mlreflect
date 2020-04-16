@@ -29,6 +29,9 @@ def multilayer_reflectivity(q_values: Iterable, thickness: Iterable, roughness: 
     scattering_length_density = np.flip(np.asarray(scattering_length_density))
     ambient_sld = np.asarray(ambient_sld)
 
+    if ambient_sld != 0:
+        raise NotImplementedError('Ambient SLDs other than 0 not implemented')
+
     if (len(thickness)) == len(roughness) == len(scattering_length_density):
         number_of_interfaces = len(roughness)
     else:
