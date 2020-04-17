@@ -4,10 +4,38 @@
 
 ### Added
 
-- Output normalization can now be changed from a [0, 1] range to a [-1, 1] range by choosing the approriate keyword for
-the `normalization` argument of the `OutputPreprocessor` class.
+- Added new C++-based reflectivity simulation engine from the refl1d package. This should be ~20 times faster than the
+built-in code. The simulation engine can be chosen by using via the `engine` keyword of the ReflectivityGenerator class. 
+- Output normalization can now be changed from a [0, 1] range to a [-1, 1] range by choosing the approriate value for
+the `normalization` keyword of the `OutputPreprocessor` class.
+- Added method `InputPreprocessor.revert_standardization()`.
 
 ### Changed 
+
+- The ambient SLD is now also given as a range (instead of a single value) and can be used as a non-constant label for
+training.
+- `OutputPreprocessor.apply_preprocessing()` now returns a tuple containing preprocessed labels in addition to the
+removed labels both as pandas DataFrames.
+- The `removed_labels` DataFrame is now used to by the `restore_labels` method instead of the previous `training_labels`
+DataFrame (which caused some confusion).
+- Removed methods and properties too reduce overhead and limit inconsistencies.
+- Changed the .h5 file format that is with the `h5_tools` module.
+    - It is now no longer designed to save training, validation and testing data in separate groups to give the user
+    more flexibility. As a result, the group hierarchy was reduced by one level ("data" group was removed).
+    - All non-data information (units, min/max label values, etc.) have now been moved to the "info" group.
+- Removed job list functionality from the `InputPreprocessor` class because it was unintuitive to use. Now the class is
+only used for input standardization.
+- Moved methods `apply_shot_noise()`, `generate_background()`, `apply_gaussian_convolution()` of the
+`ReflectivityGenerator` class to a new `noise` module as stand-alone functions  that can be applied to any previously
+generated reflectivity curves.
+- `apply_gaussian_convolution()` now uses the gaussian convolution from the refl1d package.
+
+### Fixed
+
+- Non-constant labels that are removed via the `OutputPreprocessor` class are now not incorrectly added to the restored
+labels anymore.
+- Fixed that the wrong number of thin film layers was saved to the .h5 file when using the `h5_tools` module.
+- The built-in reflectivity engine can now no longer generate intensities that are higher than 1.
 
 ## [0.12.2] - 2020-04-08
 
