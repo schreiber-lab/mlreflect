@@ -29,6 +29,7 @@ only used for input standardization.
 `ReflectivityGenerator` class to a new `noise` module as stand-alone functions  that can be applied to any previously
 generated reflectivity curves.
 - `apply_gaussian_convolution()` now uses the gaussian convolution from the refl1d package.
+- Updated example notebook `data/notebooks/usage_example.ipynb` to match API of version 0.13.0
 
 ### Fixed
 
