@@ -1,16 +1,16 @@
 # Changelog
 
-## [0.13.0] - 2020-04-??
+## [0.13.0] - 2020-04-22
 
 ### Added
 
 - Added new C++-based reflectivity simulation engine from the refl1d package. This should be ~20 times faster than the
-built-in code. The simulation engine can be chosen by using via the `engine` keyword of the ReflectivityGenerator class. 
+built-in code. The simulation engine can be chosen by using via the `engine` keyword of the ReflectivityGenerator class.
 - Output normalization can now be changed from a [0, 1] range to a [-1, 1] range by choosing the approriate value for
 the `normalization` keyword of the `OutputPreprocessor` class.
 - Added method `InputPreprocessor.revert_standardization()`.
 
-### Changed 
+### Changed
 
 - The ambient SLD is now also given as a range (instead of a single value) and can be used as a non-constant label for
 training.
