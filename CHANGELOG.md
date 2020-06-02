@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.13.1] - 2020-06-02
+
+### Changed
+
+- The thickness of the bottom most layer (substrate) is no longer a label, because it has no influence on the data
+ generation process and its presence was confusing.
+ 
+### Fixed
+
+- Fixed bug where the roughness of the bottom most layer was dependent on its thickness (which in turn was always set
+ to 1). This led to a substrate roughness that was confined between 0 and 0.5 Å.
+
 ## [0.13.0] - 2020-04-22
 
 ### Added
