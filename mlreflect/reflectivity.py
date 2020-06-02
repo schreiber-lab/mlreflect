@@ -11,8 +11,7 @@ def multilayer_reflectivity(q_values: Iterable, thickness: Iterable, roughness: 
         q_values: An array-like object (list, tuple, ndarray, etc.) that contains the q-values in SI units at which the
             reflected intensity will be simulated.
         thickness: An array-like object (list, tuple, ndarray, etc.) that contains the thicknesses of the sample layers
-            in SI units in order from bottom to top. The thickness of the bottom most layer (substrate) is not relevant
-            for the simulation, but some value must be provided (e.g. 1).
+            in SI units in order from bottom to top excluding the bottom most layer (substrate).
         roughness: An array-like object (list, tuple, ndarray, etc.) that contains the roughnesses of the sample
             interfaces in SI units in order from bottom to top.
         scattering_length_density: An array-like object (list, tuple, ndarray, etc.) that contains the scattering
@@ -32,10 +31,10 @@ def multilayer_reflectivity(q_values: Iterable, thickness: Iterable, roughness: 
     if ambient_sld != 0:
         raise NotImplementedError('Ambient SLDs other than 0 not implemented')
 
-    if (len(thickness)) == len(roughness) == len(scattering_length_density):
+    if (len(thickness) + 1) == len(roughness) == len(scattering_length_density):
         number_of_interfaces = len(roughness)
     else:
-        raise ValueError('Inconsistent number of layers. Thickness, roughness and sld must have the same length.')
+        raise ValueError('Inconsistent number of layers')
 
     k_z0 = q_values.astype(np.complex128) / 2
 

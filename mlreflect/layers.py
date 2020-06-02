@@ -94,9 +94,8 @@ class MultilayerStructure:
     def get_thickness_ranges(self) -> ndarray:
         """Get ndarray of tuples with min and max values of each layer thickness."""
         thickness_ranges = self._get_min_max_ranges('thickness')
-        thickness_ranges[0] = (1, 1)  # set substrate thickness to 1 (arbitrary)
 
-        return thickness_ranges
+        return thickness_ranges[1:, :]
 
     def get_roughness_ranges(self) -> ndarray:
         """Get ndarray of tuples with min and max values of each layer roughness."""
@@ -108,6 +107,8 @@ class MultilayerStructure:
 
     def _get_min_max_ranges(self, label: str) -> ndarray:
         number_of_layers = len(self.layers)
+        if number_of_layers == 0:
+            raise ValueError('Number of layers must be > 0')
 
         ranges = np.zeros((number_of_layers, 2))
         for i in reversed(range(number_of_layers)):
@@ -132,6 +133,8 @@ class MultilayerStructure:
                 layer_index + number_of_layers] = f'{layer_names[layer_index]}_roughness'
             label_names[
                 layer_index + 2 * number_of_layers] = f'{layer_names[layer_index]}_sld'
+
+        del label_names[0]  # remove substrate_thickness
 
         label_names.append('ambient_sld')
 
