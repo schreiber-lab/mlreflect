@@ -1,6 +1,10 @@
 # Changelog
 
-## [0.13.1] - 2020-06-02
+## [0.13.1] - 2020-06-03
+
+### Added
+
+- Added option for the `noise` module to generate shot noise and backgrounds with random levels within a given range.
 
 ### Changed
 
