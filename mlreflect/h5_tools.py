@@ -47,7 +47,21 @@ def save_data_as_h5(file_name: str, q_values: ndarray, reflectivity: ndarray, la
     labels.to_hdf(file_name, 'labels')
 
 
-def read_from_h5(file_name: str) -> dict:
+def save_noise(file_name: str, noise_array: ndarray, noise_levels: ndarray):
+    file_name = ensure_h5_extension(file_name)
+    with h5py.File(file_name, 'a') as data_file:
+        create_dataset_with_override(data_file, 'shot_noise', noise_array)
+        create_dataset_with_override(data_file, 'shot_noise_levels', noise_levels)
+
+
+def save_background(file_name: str, bg_array: ndarray, bg_levels: ndarray):
+    file_name = ensure_h5_extension(file_name)
+    with h5py.File(file_name, 'a') as data_file:
+        create_dataset_with_override(data_file, 'background', bg_array)
+        create_dataset_with_override(data_file, 'background_levels', bg_levels)
+
+
+def load_data(file_name: str) -> dict:
     """Reads all data in h5 file `file_name` and returns them in a dict."""
     with h5py.File(file_name, 'r') as data_file:
         q_values = np.array(data_file.get('q_values'))
