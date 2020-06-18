@@ -42,12 +42,12 @@ def apply_shot_noise(reflectivity_curves: ndarray, shot_noise_spread: Union[floa
     else:
         raise ValueError('number of dimensions mus be 1 or 2')
 
-    if type(shot_noise_spread) is float:
+    if type(shot_noise_spread) in (float, int):
         spreads = np.repeat(shot_noise_spread, num_curves)
     elif type(shot_noise_spread) is tuple:
         spreads = np.random.uniform(shot_noise_spread[0], shot_noise_spread[1], num_curves)
     else:
-        raise TypeError('shot_noise_spread must be float or tuple')
+        raise TypeError(f'shot_noise_spread must be float or tuple and is {type(shot_noise_spread)}')
 
     if num_curves == 1:
         noisy_reflectivity = np.clip(np.random.normal(reflectivity_curves, np.sqrt(reflectivity_curves * spreads[0])),
@@ -75,7 +75,7 @@ def generate_background(number_of_curves: int, number_of_q_values: int,
             background with dimensions (number_of_curves, number_of_q_values), means
     """
 
-    if type(background_base_level) is float:
+    if type(background_base_level) in (float, int):
         return np.random.normal(background_base_level, relative_background_spread * background_base_level,
                                 (number_of_curves, number_of_q_values)), np.repeat(background_base_level,
                                                                                    number_of_curves)
@@ -85,7 +85,7 @@ def generate_background(number_of_curves: int, number_of_q_values: int,
         stdevs = relative_background_spread * means
         return np.random.normal(means, stdevs, (number_of_curves, number_of_q_values)), mean
     else:
-        raise TypeError('background_base_level must be float or tuple')
+        raise TypeError(f'background_base_level must be float, int or tuple and is {type(background_base_level)}')
 
 
 @iterate_over_curves
