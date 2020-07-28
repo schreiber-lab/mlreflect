@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.13.2]
+
+### Added
+
+- Added functions to h5_tools module that can be used to save the noise and background generated with the `noise`
+ module to the save h5 file
+- Added `InputPreprocessor` properties `has_saved_standardization`, `standard_mean`, `standard_std`.
+ 
+- Added `naming` module with `make_timestamp()` function to create identifiers for training output.
+
+### Changed
+
+- Background and noise levels can now also be of `int` type (previously only `float`).
+
 ## [0.13.1] - 2020-06-03
 
 ### Added
@@ -10,7 +24,7 @@
 
 - The thickness of the bottom most layer (substrate) is no longer a label, because it has no influence on the data
  generation process and its presence was confusing.
- 
+
 ### Fixed
 
 - Fixed bug where the roughness of the bottom most layer was dependent on its thickness (which in turn was always set
