@@ -24,6 +24,18 @@ class InputPreprocessor:
 
         self._has_saved_standardization = False
 
+    @property
+    def has_saved_standardization(self):
+        return self._has_saved_standardization
+
+    @property
+    def standard_mean(self):
+        return self._standard_mean
+
+    @property
+    def standard_std(self):
+        return self._standard_std
+
     def standardize(self, data: ndarray) -> ndarray:
         """Applies standardization along axis 0 and returns standardized data. Mean and std will be reused."""
         if self._has_saved_standardization is True:
