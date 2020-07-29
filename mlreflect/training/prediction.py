@@ -1,13 +1,13 @@
 from typing import Union, List
 
-import tensorflow.keras as keras
 import numpy as np
-from tensorflow.keras import Model
+import tensorflow.keras as keras
 from numpy import ndarray
 from pandas import DataFrame
+from tensorflow.keras import Model
 
-from .label_helpers import convert_to_dataframe
-from .performance_tools import timer
+from ..utils.label_helpers import convert_to_dataframe
+from ..utils.performance_tools import timer
 
 
 class Prediction:

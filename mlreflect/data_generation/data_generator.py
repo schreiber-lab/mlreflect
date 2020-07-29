@@ -9,8 +9,8 @@ from scipy.special import erf
 from tqdm import tqdm
 
 from .layers import MultilayerStructure
-from .performance_tools import timer
 from .reflectivity import multilayer_reflectivity as builtin_engine
+from ..utils.performance_tools import timer
 
 
 class ReflectivityGenerator:

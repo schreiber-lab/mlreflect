@@ -5,8 +5,8 @@ import numpy as np
 from numpy import ndarray
 from pandas import DataFrame
 
-from .label_helpers import convert_to_dataframe
-from .layers import MultilayerStructure
+from ..data_generation.layers import MultilayerStructure
+from ..utils.label_helpers import convert_to_dataframe
 
 
 class InputPreprocessor:

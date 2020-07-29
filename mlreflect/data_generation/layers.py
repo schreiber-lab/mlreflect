@@ -22,6 +22,14 @@ class Layer:
     def __init__(self, name: str, thickness_range: Tuple, roughness_range: Tuple, sld_range: Tuple):
         self.name = name
 
+        for param_range in (thickness_range, roughness_range, sld_range):
+            if param_range[0] > param_range[1]:
+                raise ValueError('min cannot be greater than max')
+
+        for param_range in (thickness_range, roughness_range):
+            if param_range[0] < 0:
+                raise ValueError('min cannot be negative')
+
         self.ranges = {
             'min_thickness': thickness_range[0],
             'max_thickness': thickness_range[1],

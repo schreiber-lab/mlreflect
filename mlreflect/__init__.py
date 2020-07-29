@@ -1,10 +1,10 @@
-from . import h5_tools
-from .data_generator import ReflectivityGenerator
-from .layers import Layer, MultilayerStructure
-from .prediction import Prediction
-from .preprocessing import InputPreprocessor, OutputPreprocessor
-from .reflectivity import multilayer_reflectivity
-from . import noise
+from .data_generation import noise
+from .data_generation.data_generator import ReflectivityGenerator
+from .data_generation.layers import Layer, MultilayerStructure
+from .data_generation.reflectivity import multilayer_reflectivity
+from .training.prediction import Prediction
+from .training.preprocessing import InputPreprocessor, OutputPreprocessor
+from .utils import h5_tools
 
 __version__ = '0.13.1'
 

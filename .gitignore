@@ -4,3 +4,5 @@ mlreflect/__pycache__/
 build/
 dist/
 mlreflect.egg-info/
+*.pyc
+.cache/
