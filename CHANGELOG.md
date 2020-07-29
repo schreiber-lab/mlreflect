@@ -13,6 +13,7 @@
 ### Changed
 
 - Background and noise levels can now also be of `int` type (previously only `float`).
+- Refactor internal package structure of the package source.
 
 ## [0.13.1] - 2020-06-03
 
