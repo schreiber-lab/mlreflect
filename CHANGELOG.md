@@ -10,6 +10,8 @@
  
 - Added `naming` module with `make_timestamp()` function to create identifiers for training output.
 
+- Added unit tests for `layer.py`
+
 ### Changed
 
 - Background and noise levels can now also be of `int` type (previously only `float`).
