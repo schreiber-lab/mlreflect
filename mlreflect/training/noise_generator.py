@@ -14,6 +14,23 @@ from ..utils import h5_tools
 
 
 class NoiseGenerator(keras.utils.Sequence):
+    """Keras Generator object that returns a new batch of reflectivity and labels with random noise and background.
+
+    Args:
+        reflectivity: Training reflectivity curves (ndarray)
+        labels: Training labels on the same order as reflectivity (ndarray)
+        input_preprocessor: InputPreprocessor object with or without stored standardization values
+        batch_size: Number of samples per mini batch
+        shuffle: If True, shuffles reflectivity and labels after every epoch
+        noise_range: Tuple (min, max) between which the shot noise levels are randomly generated
+        background_range: Tuple (min, max) between which the background levels are randomly generated
+        mode:
+            'single': a random background is generated for every curve of a mini batch
+            'batch': a random background is generated for each mini batch
+        relative_background_spread: Relative standard deviation of the normal distribution (e.g. a value of 0.1
+                means the standard deviation is 10% of the mean)
+
+    """
 
     def __init__(self, reflectivity, labels, input_preprocessor: InputPreprocessor, batch_size=32, mode='single',
                  shuffle=True, noise_range=None, background_range=None, relative_background_spread: float = 0.1):
