@@ -46,6 +46,8 @@ class InputPreprocessor:
             mean = np.mean(data, axis=0)
             data_centered = data - mean
             std = np.std(data_centered, axis=0)
+            if 0 in std:
+                raise ValueError('std must not be 0')
 
             self._standard_mean = mean
             self._standard_std = std
