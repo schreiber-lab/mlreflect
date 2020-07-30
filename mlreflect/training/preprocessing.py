@@ -92,35 +92,109 @@ class OutputPreprocessor:
         else:
             raise ValueError(f'normalization type "{normalization}" not supported')
 
-        self._thickness_ranges = sample.get_thickness_ranges()
-        self._roughness_ranges = sample.get_roughness_ranges()
-        self.layer_sld_ranges = sample.get_layer_sld_ranges()
-        self.ambient_sld_range = sample.get_ambient_sld_ranges()
+        self.sample = sample
+        self._labels_removal_list = []
 
-        self._label_ranges = np.concatenate((self._thickness_ranges, self._roughness_ranges, self.layer_sld_ranges,
-                                             self.ambient_sld_range), axis=0)
+    @property
+    def all_label_names(self):
+        return self.sample.label_names
 
-        self._labels_min = self._label_ranges[:, 0]
-        self._labels_max = self._label_ranges[:, 1]
+    @property
+    def all_labels_min(self):
+        return self.all_label_ranges[:, 0]
 
-        self._number_of_layers = len(self._thickness_ranges)
-        self._number_of_labels = len(self._label_ranges)
+    @property
+    def all_labels_max(self):
+        return self.all_label_ranges[:, 1]
 
-        self.all_label_names = sample.get_label_names()
-        self.normalized_label_names = []
-        self.removed_label_names = []
-        self.constant_label_names = []
-        self.used_label_names = []
+    @property
+    def all_label_ranges(self):
+        return np.concatenate(
+            (self.thickness_ranges, self.roughness_ranges, self.layer_sld_ranges, self.ambient_sld_range), axis=0)
 
-        self._label_ranges_dict = {}
-        for label_index in range(self._number_of_labels):
-            self._label_ranges_dict[self.all_label_names[label_index]] = self._label_ranges[label_index, :]
+    @property
+    def number_of_labels(self):
+        return len(self.all_label_ranges)
 
+    @property
+    def number_of_layers(self):
+        return len(self.thickness_ranges)
+
+    @property
+    def label_ranges_dict(self):
+        label_ranges_dict = {}
+        for label_index in range(self.number_of_labels):
+            label_ranges_dict[self.all_label_names[label_index]] = self.all_label_ranges[label_index, :]
+        return label_ranges_dict
+
+    @property
+    def constant_label_names(self):
+        constant_label_names = []
         for name in self.all_label_names:
-            label_min = self._label_ranges_dict[name][0]
-            label_max = self._label_ranges_dict[name][1]
+            label_min = self.label_ranges_dict[name][0]
+            label_max = self.label_ranges_dict[name][1]
             if label_min == label_max:
-                self.constant_label_names += [name]
+                constant_label_names.append(name)
+        return constant_label_names
+
+    @property
+    def used_label_names(self):
+        not_used_list = self.constant_label_names + self.labels_removal_list
+        return list(np.setdiff1d(self.all_label_names, not_used_list))
+
+    @property
+    def labels_removal_list(self):
+        return self._labels_removal_list
+
+    def add_to_removal_list(self, label_name: Union[str, Iterable[str]]):
+        """Adds `label_name` to the list of labels that are removed during preprocessing. The names must be contained in
+        `label_names`."""
+        if type(label_name) is str:
+            added_list = [label_name]
+        elif isinstance(label_name, Iterable):
+            added_list = list(label_name)
+        else:
+            raise TypeError('Wrong type for `label_names`.')
+
+        for entry in added_list:
+            if entry not in self.all_label_names:
+                warn(f'{entry} not in `label_names` and it will be ignored.')
+            elif entry in self.constant_label_names:
+                warn(f'{entry} already in `constant_label_names` and it will be ignored.')
+            elif entry in self.labels_removal_list:
+                warn(f'{entry} already in `labels_removal_list` and it will be ignored.')
+            else:
+                self.labels_removal_list.append(entry)
+
+    def remove_from_removal_list(self, label_name: Union[str, Iterable[str]]):
+        if type(label_name) is str:
+            added_list = [label_name]
+        elif isinstance(label_name, Iterable):
+            added_list = list(label_name)
+        else:
+            raise TypeError('Wrong type for `label_names`.')
+
+        for entry in added_list:
+            if entry in self.labels_removal_list:
+                self._labels_removal_list.remove(entry)
+            else:
+                warn(f'{entry} not in `removed_label_names` and it will be ignored.')
+
+    @property
+    def thickness_ranges(self):
+        return self.sample.thickness_ranges
+
+    @property
+    def roughness_ranges(self):
+        return self.sample.roughness_ranges
+
+    @property
+    def layer_sld_ranges(self):
+        return self.sample.layer_sld_ranges
+
+    @property
+    def ambient_sld_range(self):
+        return self.sample.ambient_sld_ranges
 
     def apply_preprocessing(self, labels: Union[DataFrame, ndarray]) -> Tuple[DataFrame, DataFrame]:
         """Returns DataFrame of labels after normalization. Removes all constant labels and labels defined in
@@ -130,100 +204,64 @@ class OutputPreprocessor:
         preprocessed_labels = self._remove_labels(label_df.copy())
         preprocessed_labels = self._normalize_labels(preprocessed_labels)
 
-        removed_labels = label_df[self.removed_label_names + self.constant_label_names]
+        removed_labels_df = label_df[self.labels_removal_list]
 
-        return preprocessed_labels, removed_labels
-
-    def add_to_removal_list(self, label_name: Union[str, Iterable[str]]):
-        """Adds `label_name` to the list of labels that are removed during preprocessing. The names must be contained in
-        `label_names`."""
-        if type(label_name) is str:
-            added_list = [label_name]
-        elif type(label_name) is Iterable:
-            added_list = list(label_name)
-        else:
-            raise TypeError('Wrong type for `label_names`.')
-
-        for entry in added_list:
-            if entry not in self.all_label_names:
-                warn(f'{entry} not in `label_names` and it will be ignored.')
-            elif entry in self.removed_label_names:
-                warn(f'{entry} already in `removed_label_names` and it will be ignored.')
-            else:
-                self.removed_label_names.append(entry)
+        return preprocessed_labels, removed_labels_df
 
     def _normalize_labels(self, label_df: DataFrame) -> DataFrame:
         """Normalizes all labels contained in `normalized_label_names`."""
 
         for name in label_df.columns:
-            label_min = self._label_ranges_dict[name][0]
-            label_max = self._label_ranges_dict[name][1]
+            label_min = self.label_ranges_dict[name][0]
+            label_max = self.label_ranges_dict[name][1]
             if label_max != label_min:
                 if self.normalization is 'min_to_zero':
                     label_df[name] = (label_df[name] - label_min) / (label_max - label_min)
                 elif self.normalization is 'absolute_max':
                     label_df[name] = label_df[name] / np.abs(label_max)
-
-        self.normalized_label_names = list(label_df.columns)
-
         return label_df
 
     def _remove_labels(self, label_df: DataFrame) -> DataFrame:
         """Removes labels in `removed_label_names` and `constant_label_names` from `label_df` and returns DataFrame."""
 
-        removal_list = self.removed_label_names + self.constant_label_names
+        removal_list = self.labels_removal_list + self.constant_label_names
         for name in removal_list:
             if name not in label_df.columns:
                 warn(f'Label "{name}" not in the list of labels (maybe already removed). Skipping "{name}".')
             else:
                 del label_df[name]
-
-        self.used_label_names = self._make_used_label_names()
-
         return label_df
 
-    def _make_used_label_names(self):
-        used_label_names = self.all_label_names.copy()
-        removed_list = self.constant_label_names + self.removed_label_names
-        for name in removed_list:
-            used_label_names.remove(name)
-
-        return used_label_names
-
-    def restore_labels(self, predicted_labels: Union[DataFrame, ndarray],
-                       removed_labels: Union[ndarray, DataFrame]) -> DataFrame:
+    def restore_labels(self, predicted_labels: Union[DataFrame, ndarray]) -> DataFrame:
         """Takes the predicted labels, reverts normalization and adds constant labels and returns those as DataFrame."""
 
         predicted_labels_df = convert_to_dataframe(predicted_labels, self.used_label_names)
-        removed_labels_df = convert_to_dataframe(removed_labels, self.removed_label_names)
 
         restored_labels_df = self._renormalize_labels(predicted_labels_df)
-        restored_labels_df = self._add_constant_labels(restored_labels_df, removed_labels_df)
+        restored_labels_df = self._add_constant_labels(restored_labels_df)
 
-        reordered_labels_df = restored_labels_df[self.all_label_names]
+        remaining_label_names = self.all_label_names
+        for name in self.labels_removal_list:
+            remaining_label_names.remove(name)
+        reordered_labels_df = restored_labels_df[remaining_label_names]
 
         return reordered_labels_df
 
     def _renormalize_labels(self, label_df: DataFrame) -> DataFrame:
         """Removes normalization from all labels in `label_df` which are in `normalized_label_names`."""
-        if not self.normalized_label_names:
-            raise ValueError('No normalized labels. `_normalize_labels` must be called first.')
 
-        for name in self.normalized_label_names:
-            label_min = self._label_ranges_dict[name][0]
-            label_max = self._label_ranges_dict[name][1]
+        for name in self.used_label_names:
+            label_min = self.label_ranges_dict[name][0]
+            label_max = self.label_ranges_dict[name][1]
             if name not in self.constant_label_names:
                 if self.normalization is 'min_to_zero':
                     label_df[name] = label_df[name] * (label_max - label_min) + label_min
                 elif self.normalization is 'absolute_max':
                     label_df[name] = label_df[name] * np.abs(label_max)
-
         return label_df
 
-    def _add_constant_labels(self, predicted_labels_df: DataFrame, removed_labels_df: DataFrame) -> DataFrame:
+    def _add_constant_labels(self, predicted_labels_df: DataFrame) -> DataFrame:
         """Adds all labels in `constant_label_names` from `removed_labels_df` to `predicted_labels_df`."""
-        constant_label_list = self.constant_label_names
-        for name in constant_label_list:
-            predicted_labels_df[name] = removed_labels_df[name].reset_index(drop=True)
-
+        for name in self.constant_label_names:
+            predicted_labels_df[name] = self.label_ranges_dict[name][0]
         return predicted_labels_df

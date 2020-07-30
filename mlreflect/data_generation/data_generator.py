@@ -50,15 +50,15 @@ class ReflectivityGenerator:
             labels: Pandas DataFrame with the randomly generated labels.
         """
 
-        thickness_ranges = self.sample.get_thickness_ranges()
-        roughness_ranges = self.sample.get_roughness_ranges()
-        layer_sld_ranges = self.sample.get_layer_sld_ranges()
-        ambient_sld_ranges = self.sample.get_ambient_sld_ranges()
+        thickness_ranges = self.sample.thickness_ranges
+        roughness_ranges = self.sample.roughness_ranges
+        layer_sld_ranges = self.sample.layer_sld_ranges
+        ambient_sld_ranges = self.sample.ambient_sld_ranges
 
         if not number_of_samples > 0:
             raise ValueError('`number_of_samples` must be at least 1.')
 
-        label_names = self.sample.get_label_names()
+        label_names = self.sample.label_names
 
         randomized_layer_slds = self._generate_values_per_layer(layer_sld_ranges, number_of_samples, distribution_type,
                                                                 bolster_fraction, bolster_width)
