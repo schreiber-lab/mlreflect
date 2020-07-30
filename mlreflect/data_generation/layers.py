@@ -46,7 +46,7 @@ class Layer:
                f'\tsld: {self.ranges["min_sld"]} -- {self.ranges["max_sld"]} [1e-6 1/Å^2]'
 
     def __repr__(self):
-        return self.name
+        return f'<Layer({repr(str(self.name))})>'
 
 
 class MultilayerStructure:
@@ -153,6 +153,9 @@ class MultilayerStructure:
         for i in reversed(range(len(self.layers))):
             output += f'[{i}] {self.layers[i]}\n'
         return output
+
+    def __repr__(self):
+        return f'<MultilayerStructure({repr(layer for layer in self)})>'
 
     def __len__(self):
         return len(self.layers)
