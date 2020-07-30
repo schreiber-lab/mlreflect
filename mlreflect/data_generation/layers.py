@@ -160,7 +160,7 @@ class MultilayerStructure:
         return output
 
     def __repr__(self):
-        return f'<MultilayerStructure({repr(layer for layer in self)})>'
+        return f'<MultilayerStructure({[layer for layer in self]})>'
 
     def __len__(self):
         return len(self.layers)
