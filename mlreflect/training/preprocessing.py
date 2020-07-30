@@ -139,8 +139,11 @@ class OutputPreprocessor:
 
     @property
     def used_label_names(self):
+        used_label_names = self.all_label_names
         not_used_list = self.constant_label_names + self.labels_removal_list
-        return list(np.setdiff1d(self.all_label_names, not_used_list))
+        for name in not_used_list:
+            used_label_names.remove(name)
+        return used_label_names
 
     @property
     def labels_removal_list(self):
