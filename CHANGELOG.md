@@ -1,21 +1,35 @@
 # Changelog
 
-## [0.13.2]
+## [0.14.0]
 
 ### Added
 
+- Added unit tests files `test_layers.py`, `test_data_generator.py`, `test_noise_generator.py` and
+ `test_preprocessing.py` as well as the test runner `runner.py`.
 - Added functions to h5_tools module that can be used to save the noise and background generated with the `noise`
  module to the save h5 file
+- Added `NoiseGenerator` class to `training.noise_generator` which allows dynamic noise and background generation during
+ training.
 - Added `InputPreprocessor` properties `has_saved_standardization`, `standard_mean`, `standard_std`.
- 
 - Added `naming` module with `make_timestamp()` function to create identifiers for training output.
-
-- Added unit tests for `layer.py`
+- Added `check_gpu.py` script to be able to quickly check if tensorflow can find the GPU.
 
 ### Changed
 
-- Background and noise levels can now also be of `int` type (previously only `float`).
+- Slightly changed the API of `OutputPreprocessor.restore_labels()`. It now only takes a single argument (the
+ normalized labels). 
 - Refactor internal package structure of the package source.
+- Cleaned up a lot of attributes and methods and turned them into properties.
+- Improved `has_saved_standardization` property of the `InputPreprocessor` class (return value depends now on whether
+ or not `standard_mean` and `standard_std` are `True` or `False`.)
+- Improved `__repr__` of `Layer` and `MultilayerStructure` classes.
+- Updated `usage_example.ipynb` to work with the new API.
+ 
+### Fixed
+
+- Fixed several inconsistency bugs of the `label_removal_list` feature of the `OutputPreprocessor` class (with the
+ help of unit tests).
+ - Background and noise levels can now also be of `int` type (previously only `float`).
 
 ## [0.13.1] - 2020-06-03
 
