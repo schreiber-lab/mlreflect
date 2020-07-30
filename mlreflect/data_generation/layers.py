@@ -61,7 +61,7 @@ class MultilayerStructure:
     """
 
     def __init__(self, ambient_sld_range: Tuple):
-        self.ambient_sld_range = ambient_sld_range
+        self._ambient_sld_range = ambient_sld_range
         self.layers = []
 
     def add_layer(self, layer: Layer, index: Union[str, int] = 'next'):
@@ -99,17 +99,20 @@ class MultilayerStructure:
             self.layers.remove(moved_item)
             self.layers.insert(to_index, moved_item)
 
-    def get_thickness_ranges(self) -> ndarray:
+    @property
+    def thickness_ranges(self) -> ndarray:
         """Get ndarray of tuples with min and max values of each layer thickness."""
         thickness_ranges = self._get_min_max_ranges('thickness')
 
         return thickness_ranges[1:, :]
 
-    def get_roughness_ranges(self) -> ndarray:
+    @property
+    def roughness_ranges(self) -> ndarray:
         """Get ndarray of tuples with min and max values of each layer roughness."""
         return self._get_min_max_ranges('roughness')
 
-    def get_layer_sld_ranges(self) -> ndarray:
+    @property
+    def layer_sld_ranges(self) -> ndarray:
         """Get ndarray of tuples with min and max values of each layer SLD."""
         return self._get_min_max_ranges('sld')
 
@@ -124,11 +127,13 @@ class MultilayerStructure:
 
         return ranges
 
-    def get_ambient_sld_ranges(self):
+    @property
+    def ambient_sld_ranges(self):
         """Get ndarray of tuples with min and max values of ambient SLD."""
-        return np.asarray([self.ambient_sld_range])
+        return np.asarray([self._ambient_sld_range])
 
-    def get_label_names(self) -> List[str]:
+    @property
+    def label_names(self) -> List[str]:
         """Get list of all layer names in order."""
         layer_names = [layer.name for layer in self.layers]
         number_of_layers = len(self.layers)
@@ -149,7 +154,7 @@ class MultilayerStructure:
         return label_names
 
     def __str__(self):
-        output = f'ambient_sld: {self.ambient_sld_range[0]}  -- {self.ambient_sld_range[1]} [1e-6 1/Å^2]\n'
+        output = f'ambient_sld: {self._ambient_sld_range[0]}  -- {self._ambient_sld_range[1]} [1e-6 1/Å^2]\n'
         for i in reversed(range(len(self.layers))):
             output += f'[{i}] {self.layers[i]}\n'
         return output
