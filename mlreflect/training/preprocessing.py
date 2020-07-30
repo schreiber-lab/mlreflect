@@ -22,11 +22,14 @@ class InputPreprocessor:
         self._standard_mean = None
         self._standard_std = None
 
-        self._has_saved_standardization = False
-
     @property
     def has_saved_standardization(self):
-        return self._has_saved_standardization
+        if self._standard_std is None and self._standard_mean is None:
+            return False
+        elif self._standard_std is not None and self._standard_mean is not None:
+            return True
+        else:
+            raise ValueError('Saved state different for mean and std. Try resetting to clear states.')
 
     @property
     def standard_mean(self):
@@ -38,7 +41,7 @@ class InputPreprocessor:
 
     def standardize(self, data: ndarray) -> ndarray:
         """Applies standardization along axis 0 and returns standardized data. Mean and std will be reused."""
-        if self._has_saved_standardization is True:
+        if self.has_saved_standardization is True:
             mean = self._standard_mean
             std = self._standard_std
             data_centered = data - mean
@@ -51,13 +54,12 @@ class InputPreprocessor:
 
             self._standard_mean = mean
             self._standard_std = std
-            self._has_saved_standardization = True
 
         standardized_data = data_centered / std
         return standardized_data
 
     def revert_standardization(self, standardized_data: ndarray):
-        if self._has_saved_standardization is False:
+        if self.has_saved_standardization is False:
             raise ValueError('There are no saved mean and std to revert!')
         else:
             reverted_data = standardized_data * self._standard_std
@@ -68,7 +70,6 @@ class InputPreprocessor:
         """Resets previously stored mean and standard deviation for standardization."""
         self._standard_mean = None
         self._standard_std = None
-        self._has_saved_standardization = False
 
 
 class OutputPreprocessor:
