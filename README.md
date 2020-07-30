@@ -22,8 +22,11 @@ or
 
 An example of how to generate training data, train the model and test it on experimental data is shown in the _data/notebooks/usage_example.ipynb_ Jupyter notebook.
 
-## Authors and contributors
-- Alessandro Greco (Institut für Angewandte Physik, University of Tübingen)
+## Authors
+#### Main author
+- Alessandro Greco <alessandro.greco@uni-tuebingen.de> (Institut für Angewandte Physik, University of Tübingen)
+
+#### Contributors
 - Vladimir Starostin (Institut für Angewandte Physik, University of Tübingen)
 - Christos Karapanagiotis (Institut für Physik, Humboldt Universität zu Berlin)
 - Alexander Hinderhofer (Institut für Angewandte Physik, University of Tübingen)
