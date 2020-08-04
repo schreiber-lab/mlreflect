@@ -10,10 +10,11 @@ class Layer:
     Args:
         name: User defined name of this layer.
         thickness_range: Tuple that contains min and max thickness for this layer in units of Å. The thickness of the
-        bottom most layer (substrate) is not relevant for the simulation, but some value must be provided, e.g. (1, 1).
+            bottom most layer (substrate) is not relevant for the simulation, but some value must be provided, e.g.
+            ``(1, 1)``.
         roughness_range: Tuple that contains the min and max roughness for this layer in units of Å.
         sld_range: Tuple that contains a the min and max scattering length density (SLD) for this in units of 1e-6 1/Å^2
-        layer.
+            layer.
 
     Returns:
         Layer object
@@ -50,14 +51,14 @@ class Layer:
 
 
 class MultilayerStructure:
-    """Defines the structure of a multilayer sample through one or multiple Layer objects and an ambient SLD.
+    """Defines the structure of a multilayer sample through one or multiple :class:`Layer` objects and an ambient SLD.
 
     Args:
-        ambient_sld_range: Tuple that contains min and max scattering length density of the ambient environment above the top
-        most layer in units of 1e-6 1/Å^2, e.g. ~0 for X-rays in air.
+        ambient_sld_range: Tuple that contains min and max scattering length density of the ambient environment above
+            the top most layer in units of 1e-6 1/Å^2, e.g. ~0 for X-rays in air.
 
     Returns:
-        MultilayerStructure object
+        MultilayerStructure
     """
 
     def __init__(self, ambient_sld_range: Tuple):
@@ -65,7 +66,7 @@ class MultilayerStructure:
         self.layers = []
 
     def add_layer(self, layer: Layer, index: Union[str, int] = 'next'):
-        """Add layer at given index position. If index='next' (default) layer is appended (added on top)."""
+        """Add layer at given index position. If ``index='next'`` (default) layer is appended (added on top)."""
         if index == 'next':
             self.layers.append(layer)
         elif type(index) is int:
@@ -74,11 +75,11 @@ class MultilayerStructure:
             raise ValueError('position must be an integer index or "next"')
 
     def rename_layer(self, layer_index, name):
-        """Renames layer at given index to `name`."""
+        """Renames layer at given index to ``name``."""
         self.layers[layer_index].name = name
 
     def swap_layers(self, from_index: int, to_index: int):
-        """Swaps the position of the two layers given by `from_index` and `to_index`."""
+        """Swaps the position of the two layers given by ``from_index`` and ``to_index``."""
         if type(from_index) is not int or type(to_index) is not int:
             raise ValueError('Indices must be integers')
 

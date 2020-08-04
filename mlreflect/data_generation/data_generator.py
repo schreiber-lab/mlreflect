@@ -17,15 +17,13 @@ class ReflectivityGenerator:
     """Generation of simulated reflectivity data and labels for neural network training.
 
     Args:
-        q_values: An array-like object (list, tuple, ndarray, etc.) that contains the q-values in units of
+        q_values: An array-like object (`list`, `tuple`, `ndarray`, etc.) that contains the q-values in units of
             1/Å at which the reflected intensity will be simulated.
-        sample: MultilayerStructure object where the sample layers and their names and parameter ranges are defined.
-        random_seed: Random seed for numpy.random.seed which affects the generation of the random labels (default 1).
+        sample: :class:`MultilayerStructure` object where the sample layers and their names and parameter ranges are
+            defined.
+        random_seed: Random seed for numpy.random.seed which affects the generation of the random labels (default ``1``).
         q_noise_spread: Standard deviation of the normal distribution of scaling factors (centered at 1) that are
             applied to each q-value during reflectivity simulation.
-
-    Returns:
-        TrainingData object.
     """
 
     def __init__(self, q_values: ndarray, sample: MultilayerStructure, q_noise_spread: float = 0, random_seed: int = 1):
@@ -42,7 +40,7 @@ class ReflectivityGenerator:
 
         Args:
             number_of_samples: Number of label sets that will be generated.
-            distribution_type: Can be 'bolstered' (default) or 'uniform'.
+            distribution_type: Can be ``'bolstered'`` (default) or ``'uniform'``.
             bolster_fraction: Fraction of simulated samples that will be redistributed to the sides of the distribution.
             bolster_width: Width of the Gaussian distribution of the redistributed samples.
 
@@ -80,18 +78,18 @@ class ReflectivityGenerator:
 
     @timer
     def simulate_reflectivity(self, labels: DataFrame, engine: str = 'refl1d') -> ndarray:
-        """Simulates reflectivity curves for the given labels and returns them as ndarray.
+        """Simulates reflectivity curves for the given labels and returns them as `ndarray`.
 
         Args:
-            labels: Must be ndarray or DataFrame with each column representing one label. The label order from left to
-            right must be "thickness", "roughness" and "scattering length density" with layers from bottom to top.
-                Example for 2 layers: ['thickness_layer1', 'thickness_layer2', 'roughness_layer1', 'roughness_layer2',
-                'sld_layer1', 'sld_layer2']
-            engine: 'refl1d' (default): Uses C++-based simulation from the refl1d package.
-                    'builtin': Uses the built-in python-based simulation (slower).
+            labels: Must be `ndarray` or DataFrame with each column representing one label. The label order from left to
+                right must be "thickness", "roughness" and "scattering length density" with layers from bottom to top.
+                Example for 2 layers: ``['thickness_layer1', 'thickness_layer2', 'roughness_layer1', 'roughness_layer2',
+                'sld_layer1', 'sld_layer2']``
+            engine: ``'refl1d'`` (default): Uses C++-based simulation from the `refl1d` package.
+                    ``'builtin'``: Uses the built-in python-based simulation (slower).
 
         Args:
-            labels: Must a pandas DataFrame with each column representing one label.
+            labels: Must a pandas `DataFrame` with each column representing one label.
 
         Returns:
             reflectivity_curves: Simulated reflectivity curves.
@@ -281,13 +279,13 @@ class ReflectivityGenerator:
         """Simulates real scattering length density profiles for the given labels and returns them as ndarray.
 
         Args:
-            labels: Must be pandas DataFrame with each column representing one label. The label order from left to
-            right must be "thickness", "roughness" and "scattering length density" with layers from bottom to top.
-                Example for 2 layers: ['thickness_layer1', 'thickness_layer2', 'roughness_layer1', 'roughness_layer2',
-                'sld_layer1', 'sld_layer2']
+            labels: Must be pandas `DataFrame` with each column representing one label. The label order from left to
+                right must be "thickness", "roughness" and "scattering length density" with layers from bottom to top.
+                Example for 2 layers: ``['thickness_layer1', 'thickness_layer2', 'roughness_layer1',
+                'roughness_layer2', 'sld_layer1', 'sld_layer2']``
 
         Returns:
-            sld_profiles: List of ndarrays of simulated scattering length density profiles (real part).
+            sld_profiles: List of `ndarray` of simulated scattering length density profiles (real part).
         """
         if len(labels.shape) is not 2:
             raise ValueError('labels dataframe must have 2 dimensions (#samples, #labels_per_sample)')
@@ -320,16 +318,17 @@ class ReflectivityGenerator:
         
         Args:
             thickness: ndarray of layer thicknesses in units Å from bottom to top. For no layers (only substrate) 
-                provide empty tuple ().
-            sld: ndarray of layer scattering length densities in units 1/Å^-2 * 10^-6 from bottom to top.  For no layers
-                (only substrate) provide empty tuple ().
-            roughness: ndarray of RMS interface roughnesses in units Å from bottom to top. At least one has to be given.
+                provide empty tuple ``(,)``.
+            sld: `ndarray` of layer scattering length densities in units 1/Å^-2 * 10^-6 from bottom to top.  For no
+                layers (only substrate) provide empty tuple ``(,)``.
+            roughness: `ndarray` of RMS interface roughnesses in units Å from bottom to top. At least one has to be
+                given.
             sld_substrate: Scattering length density of the used substrate in units 1/Å^-2 * 10^-6.
             sld_ambient: Scattering length density of the ambient medium in units 1/Å^-2 * 10^-6.
 
         Returns:
-            height, sld_profile: Tuple of ndarrays of sample height in units Å and the scattering length density profile
-                in units 1/Å^-2 * 10^-6.
+            height, sld_profile: Tuple of `ndarrays` of sample height in units Å and the scattering length density 
+            profile in units 1/Å^-2 * 10^-6.
         """
 
         if not len(thickness) == len(sld) == (len(roughness) - 1):

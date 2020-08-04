@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.1] 2020-08-4
+
+### Changed
+
+- Updated all docstrings to that they can be read by the documentation generator Sphinx (using the Napoleon extension
+ for Google-style docstrings).
+
 ## [0.14.0] 2020-07-31
 
 ### Added

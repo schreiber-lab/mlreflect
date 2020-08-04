@@ -19,7 +19,7 @@ def multilayer_reflectivity(q_values: Iterable, thickness: Iterable, roughness: 
         ambient_sld: Scattering length density of the ambient environment (above the top most layer).
 
     Returns:
-        ndrray of simulated intensity values with same length as `q_values`.
+        ndrray of simulated intensity values with same length as ``q_values``.
     """
 
     q_values = np.asarray(q_values)

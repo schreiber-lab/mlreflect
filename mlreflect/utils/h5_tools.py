@@ -10,14 +10,14 @@ from pandas import DataFrame
 
 
 def save_data_as_h5(file_name: str, q_values: ndarray, reflectivity: ndarray, labels: DataFrame, number_of_layers: int):
-    """Saves `q_values`, `reflectivity` and `labels` in the .5h file `file_name`. Labels are saved as pandas DataFrame.
+    """Saves ``q_values``, ``reflectivity`` and ``labels`` in the .5h file ``file_name``. Labels are saved as pandas `DataFrame`.
 
         Args:
             file_name: Name or path of the .h5 file
-            q_values: numpy array of q values in units 1/A
-            reflectivity: n-by-m numpy array of reflectivity curves where n is the number of curves and m the number of
-                q values
-            labels: pandas DataFrame of labels
+            q_values: `ndarray` of q values in units 1/A
+            reflectivity: `n-by-m` `ndarray` of reflectivity curves where `n` is the number of curves and m the number
+            of q-values
+            labels: pandas `DataFrame` of labels
             number_of_layers: Number of thin film layers that were simulated (excluding ambient layer)
 
     """
@@ -62,7 +62,7 @@ def save_background(file_name: str, bg_array: ndarray, bg_levels: ndarray):
 
 
 def load_data(file_name: str) -> dict:
-    """Reads all data in h5 file `file_name` and returns them in a dict."""
+    """Reads all data in h5 file ``file_name`` and returns them as a `dict`."""
     with h5py.File(file_name, 'r') as data_file:
         q_values = np.array(data_file.get('q_values'))
 

@@ -52,23 +52,24 @@ class NoiseGenerator(BaseGenerator):
     """Generator object that returns a standardized batch of reflectivity and labels with random noise and background.
 
     Args:
-        reflectivity: Training reflectivity curves (ndarray)
-        labels: Training labels on the same order as reflectivity (ndarray)
-        input_preprocessor: InputPreprocessor object with or without stored standardization values
+        reflectivity: Training reflectivity curves
+        labels: Training labels on the same order as reflectivity
+        input_preprocessor: :class:``InputPreprocessor`` object with or without stored standardization values
         batch_size: Number of samples per mini batch
-        shuffle: If True, shuffles reflectivity and labels after every epoch
-        noise_range: Tuple (min, max) between which the shot noise levels are randomly generated
-        background_range: Tuple (min, max) between which the background levels are randomly generated
+        shuffle: If ``True``, shuffles reflectivity and labels after every epoch
+        noise_range: Tuple ``(min, max)`` between which the shot noise levels are randomly generated
+        background_range: Tuple ``(min, max)`` between which the background levels are randomly generated
         mode:
             'single': random noise and background levels are generated for every curve of a mini batch
             'batch': random noise and background levels are generated for each mini batch
-        relative_background_spread: Relative standard deviation of the normal distribution (e.g. a value of 0.1
+        relative_background_spread: Relative standard deviation of the normal distribution (e.g. a value of ``0.1``
                 means the standard deviation is 10% of the mean)
 
     """
 
-    def __init__(self, reflectivity, labels, input_preprocessor: InputPreprocessor, batch_size=32, shuffle=True,
-                 mode='single', noise_range=None, background_range=None, relative_background_spread: float = 0.1):
+    def __init__(self, reflectivity: ndarray, labels: ndarray, input_preprocessor: InputPreprocessor, batch_size=32,
+                 shuffle=True, mode='single', noise_range=None, background_range=None,
+                 relative_background_spread: float = 0.1):
 
         super().__init__(reflectivity, labels, input_preprocessor, batch_size, shuffle)
 

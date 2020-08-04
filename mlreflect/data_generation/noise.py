@@ -68,11 +68,11 @@ def generate_background(number_of_curves: int, number_of_q_values: int,
             number_of_curves: Number of curves for which a background is generated
             number_of_q_values: Length of the generated array (should be same length as reflectivity curve)
             background_base_level: Range from which the mean of the normal distribution is chosen
-            relative_background_spread: Relative standard deviation of the normal distribution (e.g. a value of 0.1
+            relative_background_spread: Relative standard deviation of the normal distribution (e.g. a value of ``0.1``
                 means the standard deviation is 10% of the mean)
 
         Returns:
-            background with dimensions (number_of_curves, number_of_q_values), means
+            background, means: background has dimensions ``(number_of_curves, number_of_q_values)``
     """
 
     if type(background_base_level) in (float, int):
@@ -91,12 +91,12 @@ def generate_background(number_of_curves: int, number_of_q_values: int,
 @iterate_over_curves
 def apply_gaussian_convolution(reflectivity_curves: ndarray, q_before: ndarray, q_after: ndarray,
                                width: ndarray) -> ndarray:
-    """Returns convolved reflectivity curves at q-values given in `q_before`.
+    """Returns convolved reflectivity curves at q-values given in ``q_before``.
 
     Args:
         reflectivity_curves: Array of normalized reflectivity curves
         q_before: q-values that correspond to the given reflectivity curve
-        q_after: q-values for which the convolved curve is evaluated (shorter than `q_before`)
+        q_after: q-values for which the convolved curve is evaluated (shorter than ``q_before``)
         width: width of the gaussian convolution at each q-value
 
     Returns:

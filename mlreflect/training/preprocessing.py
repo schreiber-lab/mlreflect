@@ -12,10 +12,8 @@ from ..utils.label_helpers import convert_to_dataframe
 class InputPreprocessor:
     """Allows standardization while storing mean and standard deviation for later use.
 
-    Args: None
-
     Returns:
-        InputPreprocessor object.
+        InputPreprocessor
     """
 
     def __init__(self):
@@ -40,7 +38,7 @@ class InputPreprocessor:
         return self._standard_std
 
     def standardize(self, data: ndarray) -> ndarray:
-        """Applies standardization along axis 0 and returns standardized data. Mean and std will be reused."""
+        """Applies standardization along ``axis=0`` and returns standardized data. Mean and std will be reused."""
         if self.has_saved_standardization is True:
             mean = self._standard_mean
             std = self._standard_std
@@ -76,13 +74,14 @@ class OutputPreprocessor:
     """Class for preprocessing reflectivity labels for training and validation.
 
     Args:
-        sample: MultilayerStructure object where the sample layers and their names and parameter ranges are defined.
+        sample: :class:`MultilayerStructure` object where the sample layers and their names and parameter ranges are
+            defined.
         normalization: Defines how the output labels are normalized.
-            "min_to_zero" (default): shifts minimum value to 0 and scales maximum value to 1 (= range [0, 1]).
-            "absolute_max": scales absolute maximum value to 1 (= range [-1, 1]).
+            "min_to_zero" (default): shifts minimum value to ``0`` and scales maximum value to ``1``).
+            "absolute_max": scales absolute maximum value to ``1``).
 
     Returns:
-        OutputPreprocessor object
+        OutputPreprocessor
     """
 
     def __init__(self, sample: MultilayerStructure, normalization: str = 'min_to_zero'):
@@ -150,8 +149,8 @@ class OutputPreprocessor:
         return self._labels_removal_list
 
     def add_to_removal_list(self, label_name: Union[str, Iterable[str]]):
-        """Adds `label_name` to the list of labels that are removed during preprocessing. The names must be contained in
-        `label_names`."""
+        """Adds ``label_name`` to the list of labels that are removed during preprocessing. The names must be contained in
+        ``label_names``."""
         if type(label_name) is str:
             added_list = [label_name]
         elif isinstance(label_name, Iterable):
@@ -200,8 +199,8 @@ class OutputPreprocessor:
         return self.sample.ambient_sld_ranges
 
     def apply_preprocessing(self, labels: Union[DataFrame, ndarray]) -> Tuple[DataFrame, DataFrame]:
-        """Returns DataFrame of labels after normalization. Removes all constant labels and labels defined in
-        `removed_label_names` and returns them separately."""
+        """Returns `DataFrame` of labels after normalization. Removes all constant labels and labels defined in
+        ``removed_label_names`` and returns them separately."""
         label_df = convert_to_dataframe(labels, self.all_label_names)
 
         preprocessed_labels = self._remove_labels(label_df.copy())
@@ -212,7 +211,7 @@ class OutputPreprocessor:
         return preprocessed_labels, removed_labels_df
 
     def _normalize_labels(self, label_df: DataFrame) -> DataFrame:
-        """Normalizes all labels contained in `normalized_label_names`."""
+        """Normalizes all labels contained in ``normalized_label_names``."""
 
         for name in label_df.columns:
             label_min = self.label_ranges_dict[name][0]
@@ -251,7 +250,7 @@ class OutputPreprocessor:
         return reordered_labels_df
 
     def _renormalize_labels(self, label_df: DataFrame) -> DataFrame:
-        """Removes normalization from all labels in `label_df` which are in `normalized_label_names`."""
+        """Removes normalization from all labels in ``label_df`` which are in ``normalized_label_names``."""
 
         for name in self.used_label_names:
             label_min = self.label_ranges_dict[name][0]
@@ -264,7 +263,7 @@ class OutputPreprocessor:
         return label_df
 
     def _add_constant_labels(self, predicted_labels_df: DataFrame) -> DataFrame:
-        """Adds all labels in `constant_label_names` from `removed_labels_df` to `predicted_labels_df`."""
+        """Adds all labels in ``constant_label_names`` from ``removed_labels_df`` to ``predicted_labels_df``."""
         for name in self.constant_label_names:
             predicted_labels_df[name] = self.label_ranges_dict[name][0]
         return predicted_labels_df
