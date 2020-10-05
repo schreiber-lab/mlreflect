@@ -110,6 +110,35 @@ class NoiseGenerator(BaseGenerator):
         return self.input_preprocessor.standardize(refl), np.array(self.labels)[indexes]
 
 
+class NoiseGeneratorLog(NoiseGenerator):
+    def __init__(self, reflectivity, labels, batch_size=32, mode='single', shuffle=True, noise_range=None,
+                 background_range=None, relative_background_spread: float = 0.1):
+        super().__init__(reflectivity, labels, None, batch_size=batch_size, mode=mode, shuffle=shuffle,
+                         noise_range=noise_range, background_range=background_range,
+                         relative_background_spread=relative_background_spread)
+
+    def __data_generation(self, indexes):
+        refl = self.reflectivity[indexes]
+        if self.noise_range is not None:
+            if self.mode is 'single':
+                refl = noise.apply_shot_noise(refl, self.noise_range)[0]
+            else:
+                batch_noise_level = np.random.uniform(*self.noise_range)
+                refl = noise.apply_shot_noise(refl, batch_noise_level)[0]
+        if self.background_range is not None:
+            if self.mode is 'single':
+                refl += noise.generate_background(len(refl), self.n_input, self.background_range,
+                                                  self.relative_background_spread)[0]
+
+        return abs(np.log10(refl) / 10), np.array(self.labels)[indexes]
+
+    def __getitem__(self, index):
+        indexes = self.indexes[index * self.batch_size:(index + 1) * self.batch_size]
+        x, y = self.__data_generation(indexes)
+
+        return x, y, [None]
+
+
 def add_random_levels(file_name: str, labels: DataFrame, generator: ReflectivityGenerator, n_layers: int,
                       shot_noise_spread: Union[float, Tuple[float, float]],
                       background_base_level: Union[float, Tuple[float, float]],
