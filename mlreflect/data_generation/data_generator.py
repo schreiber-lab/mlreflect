@@ -21,14 +21,17 @@ class ReflectivityGenerator:
             1/Å at which the reflected intensity will be simulated.
         sample: :class:`MultilayerStructure` object where the sample layers and their names and parameter ranges are
             defined.
-        random_seed: Random seed for numpy.random.seed which affects the generation of the random labels (default ``1``).
+        random_seed: Random seed for numpy.random.seed which affects the generation of the random labels (default
+            ``None`` means random seed).
         q_noise_spread: Standard deviation of the normal distribution of scaling factors (centered at 1) that are
             applied to each q-value during reflectivity simulation.
     """
 
-    def __init__(self, q_values: ndarray, sample: MultilayerStructure, q_noise_spread: float = 0, random_seed: int = 1):
+    def __init__(self, q_values: ndarray, sample: MultilayerStructure, q_noise_spread: float = 0, random_seed: int =
+    None):
 
-        np.random.seed(random_seed)
+        if random_seed is not None:
+            np.random.seed(random_seed)
         self.q_values = np.asarray(q_values)
         self.sample = sample
         self.q_noise_spread = q_noise_spread
