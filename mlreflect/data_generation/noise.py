@@ -59,6 +59,44 @@ def apply_shot_noise(reflectivity_curves: ndarray, shot_noise_spread: Union[floa
     return noisy_reflectivity, spreads
 
 
+def apply_poisson_noise(reflectivity_curves: ndarray, rate_spread: Union[float, Tuple[float, float]]) -> Tuple[
+    ndarray, ndarray]:
+    """Returns reflectivity curves with applied shot noise based on `shot_noise_spread`.
+
+        Args:
+            reflectivity_curves: Array of normalized reflectivity curves
+            rate_spread: Scaling factor c for the standard deviation sqrt(I*c) of the shot noise around
+                the intensity of simulated reflectivity curves. Since the intensity is normalized, this is
+                equivalent to setting the direct beam intensity I_0 = 1/c. If a tuple with two values is given,
+                a random value between the two is chosen for each curve.
+
+        Returns:
+            noisy_reflectivity, spreads
+    """
+    dimensions = len(reflectivity_curves.shape)
+    if dimensions == 1:
+        num_curves = 1
+    elif dimensions == 2:
+        num_curves = len(reflectivity_curves)
+    else:
+        raise ValueError('number of dimensions mus be 1 or 2')
+
+    if type(rate_spread) in (float, int):
+        spreads = np.repeat(rate_spread, num_curves)
+    elif type(rate_spread) is tuple:
+        spreads = np.random.uniform(rate_spread[0], rate_spread[1], num_curves)
+    else:
+        raise TypeError(f'rate_spread must be float or tuple and is {type(rate_spread)}')
+
+    if num_curves == 1:
+        noisy_reflectivity = np.clip(np.random.poisson(reflectivity_curves * spreads[0]) / spreads[0], 1e-8, None)
+    else:
+        noisy_reflectivity = np.array(
+            [np.clip(np.random.poisson(curve * spread) / spread, 1e-8, None) for curve, spread in
+             zip(reflectivity_curves, spreads)])
+    return noisy_reflectivity, spreads
+
+
 def generate_background(number_of_curves: int, number_of_q_values: int,
                         background_base_level: Union[float, Tuple[float, float]],
                         relative_background_spread: float) -> Tuple[ndarray, ndarray]:
