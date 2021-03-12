@@ -299,16 +299,16 @@ class ReflectivityGenerator:
         number_of_profiles = labels.shape[0]
 
         thicknesses, roughnesses, slds = self.separate_labels_by_category(labels)
-
         sld_substrate = slds[:, 0]
-        slds = slds[:, 1:-1]
+        layer_slds = slds[:, 1:-1]
         sld_ambient = slds[:, -1]
         roughnesses = roughnesses[:, :]
+
 
         sld_profiles = []
 
         for i in tqdm(range(number_of_profiles)):
-            height, profile = self.make_sld_profile(thicknesses[i, :], slds[i, :], roughnesses[i, :], sld_substrate[i],
+            height, profile = self.make_sld_profile(thicknesses[i, :], layer_slds[i, :], roughnesses[i, :], sld_substrate[i],
                                                     sld_ambient[i])
 
             this_profile = np.zeros((2, len(height)))
