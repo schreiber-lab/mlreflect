@@ -107,10 +107,10 @@ def apply_poisson_noise(reflectivity_curves: ndarray, rate_spread: Union[float, 
         raise TypeError(f'rate_spread must be float or tuple and is {type(rate_spread)}')
 
     if num_curves == 1:
-        noisy_reflectivity = np.clip(np.random.poisson(reflectivity_curves * spreads[0]) / spreads[0], 1e-8, None)
+        noisy_reflectivity = np.clip(np.random.poisson(reflectivity_curves * spreads[0]) / spreads[0], 1e-16, None)
     else:
         noisy_reflectivity = np.array(
-            [np.clip(np.random.poisson(curve * spread) / spread, 1e-8, None) for curve, spread in
+            [np.clip(np.random.poisson(curve * spread) / spread, 1e-16, None) for curve, spread in
              zip(reflectivity_curves, spreads)])
     return noisy_reflectivity, spreads
 
