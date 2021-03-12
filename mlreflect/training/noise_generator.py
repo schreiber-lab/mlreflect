@@ -14,14 +14,14 @@ from ..utils import h5_tools
 
 
 class BaseGenerator(keras.utils.Sequence):
-    def __init__(self, reflectivity, labels, input_preprocessor: InputPreprocessor, batch_size=32, shuffle=True):
+    def __init__(self, reflectivity, labels, batch_functions, batch_size=32, shuffle=True):
         self.n_samples = len(reflectivity)
         if batch_size > self.n_samples:
             raise ValueError('batch size cannot be larger than input length')
+        self.batch_functions = batch_functions
         self.batch_size = batch_size
         self.n_input = reflectivity.shape[1]
         self.n_output = labels.shape[1]
-        self.input_preprocessor = input_preprocessor
         self.labels = labels
         self.reflectivity = reflectivity
         self.shuffle = shuffle
@@ -45,7 +45,11 @@ class BaseGenerator(keras.utils.Sequence):
             np.random.shuffle(self.indexes)
 
     def __data_generation(self, indexes):
-        return self.reflectivity[indexes], np.array(self.labels)[indexes]
+        batch_input = self.reflectivity[indexes]
+        batch_output = np.array(self.labels)[indexes]
+        for function in self.batch_functions:
+            batch_input, batch_output = function(batch_input, batch_output)
+        return batch_input, batch_output
 
 
 class NoiseGenerator(BaseGenerator):
@@ -71,8 +75,9 @@ class NoiseGenerator(BaseGenerator):
                  shuffle=True, mode='single', noise_range=None, background_range=None,
                  relative_background_spread: float = 0.1):
 
-        super().__init__(reflectivity, labels, input_preprocessor, batch_size, shuffle)
+        super().__init__(reflectivity, labels, None, batch_size, shuffle)
 
+        self.input_preprocessor = input_preprocessor
         self.mode = mode
         self.noise_range = noise_range
         self.background_range = background_range
@@ -92,7 +97,7 @@ class NoiseGenerator(BaseGenerator):
             if self.mode is 'single':
                 refl = noise.apply_shot_noise(refl, self.noise_range)[0]
             elif self.mode is 'batch':
-                batch_noise_level = np.random.uniform(*self.noise_range)
+                batch_noise_level = noise.random_logarithmic(1, self.noise_range)
                 refl = noise.apply_shot_noise(refl, batch_noise_level)[0]
             else:
                 raise ValueError('not a valid mode')
@@ -101,7 +106,7 @@ class NoiseGenerator(BaseGenerator):
                 refl += noise.generate_background(len(refl), self.n_input, self.background_range,
                                                   self.relative_background_spread)[0]
             elif self.mode is 'batch':
-                batch_bg_level = np.random.uniform(*self.background_range)
+                batch_bg_level = noise.random_logarithmic(1, self.background_range)
                 refl += noise.generate_background(len(refl), self.n_input, batch_bg_level,
                                                   self.relative_background_spread)[0]
             else:
@@ -122,13 +127,21 @@ class NoiseGeneratorLog(NoiseGenerator):
         if self.noise_range is not None:
             if self.mode is 'single':
                 refl = noise.apply_shot_noise(refl, self.noise_range)[0]
-            else:
-                batch_noise_level = np.random.uniform(*self.noise_range)
+            elif self.mode is 'batch':
+                batch_noise_level = noise.random_logarithmic(1, self.noise_range)
                 refl = noise.apply_shot_noise(refl, batch_noise_level)[0]
+            else:
+                raise ValueError('not a valid mode')
         if self.background_range is not None:
             if self.mode is 'single':
                 refl += noise.generate_background(len(refl), self.n_input, self.background_range,
                                                   self.relative_background_spread)[0]
+            elif self.mode is 'batch':
+                batch_bg_level = noise.random_logarithmic(1, self.background_range)
+                refl += noise.generate_background(len(refl), self.n_input, batch_bg_level,
+                                                  self.relative_background_spread)[0]
+            else:
+                raise ValueError('not a valid mode')
 
         return abs(np.log10(refl) / 10), np.array(self.labels)[indexes]
 
