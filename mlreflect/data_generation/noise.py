@@ -63,7 +63,7 @@ def apply_shot_noise(reflectivity_curves: ndarray, shot_noise_spread: Union[floa
     if type(shot_noise_spread) in (float, int):
         spreads = np.repeat(shot_noise_spread, num_curves)
     elif type(shot_noise_spread) is tuple:
-        spreads = random_logarithmic(num_curves, *shot_noise_spread)
+        spreads = random_logarithmic(num_curves, shot_noise_spread)
     else:
         raise TypeError(f'shot_noise_spread must be float or tuple and is {type(shot_noise_spread)}')
 
