@@ -63,7 +63,7 @@ def apply_shot_noise(reflectivity_curves: ndarray, shot_noise_spread: Union[floa
     if type(shot_noise_spread) in (float, int):
         spreads = np.repeat(shot_noise_spread, num_curves)
     elif type(shot_noise_spread) is tuple:
-        spreads = np.random.uniform(shot_noise_spread[0], shot_noise_spread[1], num_curves)
+        spreads = random_logarithmic(num_curves, *shot_noise_spread)
     else:
         raise TypeError(f'shot_noise_spread must be float or tuple and is {type(shot_noise_spread)}')
 
@@ -102,7 +102,7 @@ def apply_poisson_noise(reflectivity_curves: ndarray, rate_spread: Union[float, 
     if type(rate_spread) in (float, int):
         spreads = np.repeat(rate_spread, num_curves)
     elif type(rate_spread) is tuple:
-        spreads = np.random.uniform(rate_spread[0], rate_spread[1], num_curves)
+        spreads = random_logarithmic(num_curves, rate_spread)
     else:
         raise TypeError(f'rate_spread must be float or tuple and is {type(rate_spread)}')
 
@@ -136,12 +136,17 @@ def generate_background(number_of_curves: int, number_of_q_values: int,
                                 (number_of_curves, number_of_q_values)), np.repeat(background_base_level,
                                                                                    number_of_curves)
     elif type(background_base_level) is tuple:
-        mean = np.random.uniform(background_base_level[0], background_base_level[1], number_of_curves)
+        mean = random_logarithmic(number_of_curves, background_base_level)
         means = np.tile(mean, (number_of_q_values, 1)).T
         stdevs = relative_background_spread * means
         return np.random.normal(means, stdevs, (number_of_curves, number_of_q_values)), mean
     else:
         raise TypeError(f'background_base_level must be float, int or tuple and is {type(background_base_level)}')
+
+
+def random_logarithmic(n_values, ranges):
+    log_ranges = (np.log10(ranges[0]), np.log10(ranges[1]))
+    return 10 ** np.random.uniform(*log_ranges, n_values)
 
 
 @iterate_over_curves
