@@ -51,10 +51,10 @@ def apply_shot_noise(reflectivity_curves: ndarray, shot_noise_spread: Union[floa
 
     if num_curves == 1:
         noisy_reflectivity = np.clip(np.random.normal(reflectivity_curves, np.sqrt(reflectivity_curves * spreads[0])),
-                                     1e-8, None)
+                                     1e-16, None)
     else:
         noisy_reflectivity = np.array(
-            [np.clip(np.random.normal(curve, np.sqrt(curve * spread)), 1e-8, None) for curve, spread in
+            [np.clip(np.random.normal(curve, np.sqrt(curve * spread)), 1e-16, None) for curve, spread in
              zip(reflectivity_curves, spreads)])
     return noisy_reflectivity, spreads
 
