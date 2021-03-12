@@ -210,8 +210,8 @@ def add_discrete_levels(labels: DataFrame, generator: ReflectivityGenerator, n_l
 
 # TODO These functions are obsolete and should be removed
 def apply_noise(reflectivity: ndarray, shot_noise_spread: Union[float, Tuple[float, float]], file_name: str = None):
-    logging.info('Generating noise ...')
-    noisy_reflectivity, noise_levels = noise.apply_shot_noise(reflectivity, shot_noise_spread)
+    logging.info('Generating poisson noise ...')
+    noisy_reflectivity, noise_levels = noise.apply_poisson_noise(reflectivity, shot_noise_spread)
     noise_array = noisy_reflectivity - reflectivity
     if file_name is not None:
         h5_tools.save_noise(file_name, noise_array, noise_levels)
