@@ -20,6 +20,24 @@ def iterate_over_curves(func):
     return wrapper
 
 
+def apply_uniform_noise(refl, noise_range):
+    shape = refl.shape
+    noise_factors = np.random.uniform(*noise_range, shape)
+    return refl * noise_factors
+
+
+def apply_scaling_factor(refl, scale_factor_range):
+    refl = np.atleast_2d(refl)
+    n_curves = len(refl)
+    scale_factors = np.random.uniform(*scale_factor_range, n_curves)
+    for i in range(n_curves):
+        refl[i] *= scale_factors[i]
+    if n_curves == 1:
+        return refl[0]
+    else:
+        return refl
+
+
 def apply_shot_noise(reflectivity_curves: ndarray, shot_noise_spread: Union[float, Tuple[float, float]]) -> Tuple[
     ndarray, ndarray]:
     """Returns reflectivity curves with applied shot noise based on `shot_noise_spread`.
