@@ -11,6 +11,7 @@ from tqdm import tqdm
 from .layers import MultilayerStructure
 from .reflectivity import multilayer_reflectivity as builtin_engine
 from ..utils.performance_tools import timer
+from .noise import random_logarithmic
 
 
 class ReflectivityGenerator:
@@ -182,6 +183,8 @@ class ReflectivityGenerator:
                                                             bolster_fraction, bolster_width)
             elif distribution_type == 'uniform':
                 return np.random.uniform(label_range[0], label_range[1], number_of_values)
+            elif distribution_type == 'logarithmic':
+                return random_logarithmic(number_of_values, label_range)
 
         else:
             real_randomized_labels = self._return_random_values((label_range[0].real, label_range[1].real),
