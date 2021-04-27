@@ -17,6 +17,7 @@ class FootprintRescaler:
             ``wavelength`` do not need to be provided.
 
     """
+
     def __init__(self, reflectivity: ndarray, true_ratio: float, errors: list, q: ndarray = None, wavelength:
     float = None, theta: ndarray = None):
         self.reflectivity = np.atleast_2d(reflectivity)

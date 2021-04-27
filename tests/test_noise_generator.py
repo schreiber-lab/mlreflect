@@ -4,7 +4,7 @@ import numpy as np
 from numpy.testing import assert_equal
 
 from mlreflect import InputPreprocessor
-from mlreflect import Layer, MultilayerStructure
+from mlreflect import Layer, MultilayerStructure, AmbientLayer, Substrate
 from mlreflect import ReflectivityGenerator
 from mlreflect.training.noise_generator import NoiseGenerator
 
@@ -12,11 +12,13 @@ from mlreflect.training.noise_generator import NoiseGenerator
 class TestNoiseGeneratorMethods(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.layer1 = Layer('first_layer', (0, 100), (1, 10), (10, 20))
-        cls.layer2 = Layer('second_layer', (50, 150), (1, 1), (-10, 10))
+        cls.ambient = AmbientLayer('ambient', 0)
+        cls.layer1 = Substrate('first_layer', 10, 20)
+        cls.layer2 = Layer('second_layer', (50, 150), 1, (-10, 10))
 
-        cls.multilayer = MultilayerStructure((1, 5))
-        cls.multilayer.add_layer(cls.layer1)
+        cls.multilayer = MultilayerStructure()
+        cls.multilayer.set_ambient_layer(cls.ambient)
+        cls.multilayer.set_substrate(cls.layer1)
         cls.multilayer.add_layer(cls.layer2)
 
         cls.q = np.linspace(0.01, 0.14, 100)

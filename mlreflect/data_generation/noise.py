@@ -5,6 +5,8 @@ import numpy as np
 from numpy import ndarray
 from refl1d.reflectivity import convolve as refl1d_convolve
 
+from .distributions import random_logarithmic_distribution
+
 
 def iterate_over_curves(func):
     @functools.wraps(func)
@@ -63,7 +65,7 @@ def apply_shot_noise(reflectivity_curves: ndarray, shot_noise_spread: Union[floa
     if type(shot_noise_spread) in (float, int):
         spreads = np.repeat(shot_noise_spread, num_curves)
     elif type(shot_noise_spread) is tuple:
-        spreads = random_logarithmic(num_curves, shot_noise_spread)
+        spreads = random_logarithmic_distribution(*shot_noise_spread, num_curves)
     else:
         raise TypeError(f'shot_noise_spread must be float or tuple and is {type(shot_noise_spread)}')
 
@@ -102,7 +104,7 @@ def apply_poisson_noise(reflectivity_curves: ndarray, rate_spread: Union[float, 
     if type(rate_spread) in (float, int):
         spreads = np.repeat(rate_spread, num_curves)
     elif type(rate_spread) is tuple:
-        spreads = random_logarithmic(num_curves, rate_spread)
+        spreads = random_logarithmic_distribution(*rate_spread, num_curves)
     else:
         raise TypeError(f'rate_spread must be float or tuple and is {type(rate_spread)}')
 
@@ -136,17 +138,12 @@ def generate_background(number_of_curves: int, number_of_q_values: int,
                                 (number_of_curves, number_of_q_values)), np.repeat(background_base_level,
                                                                                    number_of_curves)
     elif type(background_base_level) is tuple:
-        mean = random_logarithmic(number_of_curves, background_base_level)
+        mean = random_logarithmic_distribution(*background_base_level, number_of_curves)
         means = np.tile(mean, (number_of_q_values, 1)).T
         stdevs = relative_background_spread * means
         return np.random.normal(means, stdevs, (number_of_curves, number_of_q_values)), mean
     else:
         raise TypeError(f'background_base_level must be float, int or tuple and is {type(background_base_level)}')
-
-
-def random_logarithmic(n_values, ranges):
-    log_ranges = (np.log10(ranges[0]), np.log10(ranges[1]))
-    return 10 ** np.random.uniform(*log_ranges, n_values)
 
 
 @iterate_over_curves

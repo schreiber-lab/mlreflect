@@ -4,18 +4,20 @@ import numpy as np
 from numpy import ndarray
 from pandas import DataFrame
 
-from mlreflect import Layer, MultilayerStructure
+from mlreflect import Layer, MultilayerStructure, Substrate, AmbientLayer
 from mlreflect import ReflectivityGenerator
 
 
 class TestReflectivityGeneratorMethods(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.layer1 = Layer('first_layer', (0, 100), (1, 10), (10, 20))
-        cls.layer2 = Layer('second_layer', (50, 150), (1, 1), (-10, 10))
+        cls.ambient = AmbientLayer('ambient', 0)
+        cls.layer1 = Substrate('first_layer', 10, 20)
+        cls.layer2 = Layer('second_layer', (50, 150), 1, (-10, 10))
 
-        cls.multilayer = MultilayerStructure((1, 5))
-        cls.multilayer.add_layer(cls.layer1)
+        cls.multilayer = MultilayerStructure()
+        cls.multilayer.set_ambient_layer(cls.ambient)
+        cls.multilayer.set_substrate(cls.layer1)
         cls.multilayer.add_layer(cls.layer2)
 
         cls.q = np.linspace(0.01, 0.14, 100)
@@ -51,8 +53,7 @@ class TestReflectivityGeneratorMethods(unittest.TestCase):
         self.assertTrue(np.max(self.labels['second_layer_sld']) <= 10)
         self.assertTrue(np.min(self.labels['second_layer_sld']) >= -10)
 
-        self.assertTrue(np.max(self.labels['ambient_sld']) <= 5)
-        self.assertTrue(np.min(self.labels['ambient_sld']) >= 1)
+        self.assertTrue((self.labels['ambient_sld'] == 0).all())
 
     def test_reflectivity_type(self):
         self.assertIsInstance(self.reflectivity, ndarray)

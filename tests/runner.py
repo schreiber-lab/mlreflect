@@ -2,8 +2,8 @@ import unittest
 
 import test_data_generator
 import test_layers
-import test_preprocessing
 import test_noise_generator
+import test_preprocessing
 
 loader = unittest.TestLoader()
 suite = unittest.TestSuite()

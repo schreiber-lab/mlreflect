@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.15.0] 2021-04-27
+
+### Added
+
+- Added the `Parameter` class and its subclasses to make the definition of `Layer` objects easier.
+- `Parameter` objects can also be sampled to create random labels for training data generation.
+- Added a `Layer` subclass `ConstantLayer` which can only contain fixed parameters (no ranges)
+- Added two `ConstantLayer` subclasses `Substrate` and `AmbientLayer` which are now used to make `MultilayerStructure`
+  objects.
+- `Substrate` objects don't have a thickness.
+- `AmbientLayer` objects only have an SLD.
+- A `MultilayerStructure` object can now be exported to and read from a dictionary with the `to_dict()` and
+  `from_dict()` methods.
+- Added a `copy()` method to all `Layer` and `MultilayerStructure` classes.
+
+### Changed
+
+- `Layer` objects now initialize with `Parameter` objects instead of range tuples for each thin film parameter.
+- `MultilayerStructure` objects are no longer initialized with the ambient layer SLD. Instead, the ambient layer and 
+  substrate are defined with separate methods.
+- The substrate and ambient layer are by default constant layers
+- Moved the different sampling distribution for training label generation to a new module
+  `data_generation.distributions`
+- The optional parameter `q_noise_spread` of the `ReflectivityGenerator` class to simulate noisy _q_ values was 
+  moved from the initializer to the `simulate_reflectivity()` method.
+- Removed the option to remove non-constant labels from the training labels when using the `OutputPreprocessor` class, 
+  because it was somewhat confusing and found little use.
+
 ## [0.14.1] 2020-08-4
 
 ### Changed

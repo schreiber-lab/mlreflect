@@ -4,18 +4,20 @@ import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 
 from mlreflect import InputPreprocessor, OutputPreprocessor
-from mlreflect import Layer, MultilayerStructure
+from mlreflect import Layer, MultilayerStructure, AmbientLayer, Substrate
 from mlreflect import ReflectivityGenerator
 
 
 class TestInputPreprocessorMethods(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.layer1 = Layer('first_layer', (0, 100), (1, 10), (10, 20))
-        cls.layer2 = Layer('second_layer', (50, 150), (1, 1), (-10, 10))
+        cls.ambient = AmbientLayer('ambient', 0)
+        cls.layer1 = Substrate('first_layer', 10, 20)
+        cls.layer2 = Layer('second_layer', (50, 150), 1, (-10, 10))
 
-        cls.multilayer = MultilayerStructure((1, 5))
-        cls.multilayer.add_layer(cls.layer1)
+        cls.multilayer = MultilayerStructure()
+        cls.multilayer.set_ambient_layer(cls.ambient)
+        cls.multilayer.set_substrate(cls.layer1)
         cls.multilayer.add_layer(cls.layer2)
 
         cls.q = np.linspace(0.01, 0.14, 100)
@@ -60,11 +62,13 @@ class TestInputPreprocessorMethods(unittest.TestCase):
 class TestOutputPreprocessorMethods(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.layer1 = Layer('first_layer', (0, 100), (1, 10), (10, 20))
-        cls.layer2 = Layer('second_layer', (50, 150), (1, 1), (-10, 10))
+        cls.ambient = AmbientLayer('ambient', 0)
+        cls.layer1 = Substrate('first_layer', 10, 20)
+        cls.layer2 = Layer('second_layer', (50, 150), 1, (-10, 10))
 
-        cls.multilayer = MultilayerStructure((1, 5))
-        cls.multilayer.add_layer(cls.layer1)
+        cls.multilayer = MultilayerStructure()
+        cls.multilayer.set_ambient_layer(cls.ambient)
+        cls.multilayer.set_substrate(cls.layer1)
         cls.multilayer.add_layer(cls.layer2)
 
         cls.q = np.linspace(0.01, 0.14, 100)
@@ -75,12 +79,12 @@ class TestOutputPreprocessorMethods(unittest.TestCase):
 
         cls.non_constant_label_names = [
             'second_layer_thickness',
-            'first_layer_roughness',
-            'first_layer_sld',
-            'second_layer_sld',
-            'ambient_sld'
+            'second_layer_sld'
         ]
-        cls.constant_label_name = 'second_layer_roughness'
+        cls.constant_label_names = ['first_layer_roughness',
+                                    'first_layer_sld',
+                                    'second_layer_roughness',
+                                    'ambient_sld']
 
     def setUp(self) -> None:
         self.op_abs_max = OutputPreprocessor(self.multilayer, 'absolute_max')
@@ -91,16 +95,18 @@ class TestOutputPreprocessorMethods(unittest.TestCase):
         prep_labels_abs_max, removed_labels_abs_max = self.op_abs_max.apply_preprocessing(self.labels)
         prep_labels_min_zero, removed_labels_min_zero = self.op_min_zero.apply_preprocessing(self.labels)
 
-        self.assertEqual((10, 5), prep_labels_abs_max.shape)
-        self.assertEqual((10, 5), prep_labels_min_zero.shape)
+        self.assertEqual((10, 2), prep_labels_abs_max.shape)
+        self.assertEqual((10, 2), prep_labels_min_zero.shape)
 
         self.assertTrue(all(label_name in prep_labels_abs_max.columns for label_name in
                             self.non_constant_label_names))
         self.assertTrue(all(label_name in prep_labels_min_zero.columns for label_name in
                             self.non_constant_label_names))
 
-        self.assertNotIn(self.constant_label_name, prep_labels_abs_max.columns)
-        self.assertNotIn(self.constant_label_name, prep_labels_min_zero.columns)
+        self.assertFalse(any(label_name in prep_labels_abs_max.columns for label_name in
+                             self.constant_label_names))
+        self.assertFalse(any(label_name in prep_labels_min_zero.columns for label_name in
+                             self.constant_label_names))
 
         for max_label in prep_labels_abs_max.max():
             self.assertLessEqual(max_label, 1)
@@ -127,39 +133,6 @@ class TestOutputPreprocessorMethods(unittest.TestCase):
 
         self.assertTrue(all(self.labels == restored_labels_abs_max))
         self.assertTrue(all(self.labels == restored_labels_min_zero))
-
-    def test_add_to_removal_list(self):
-        self.op_abs_max.add_to_removal_list('second_layer_thickness')
-        self.assertEqual(1, self.op_abs_max.labels_removal_list.count('second_layer_thickness'))
-
-        self.op_abs_max.add_to_removal_list(['second_layer_thickness', 'first_layer_roughness', 'ambient_sld'])
-        self.assertEqual(1, self.op_abs_max.labels_removal_list.count('second_layer_thickness'))
-        self.assertEqual(1, self.op_abs_max.labels_removal_list.count('first_layer_roughness'))
-
-        self.op_abs_max.add_to_removal_list('second_layer_roughness')
-
-        self.op_abs_max.remove_from_removal_list('second_layer_thickness')
-        self.assertNotIn('second_layer_thickness', self.op_abs_max.labels_removal_list)
-
-        prep_labels_abs_max, removed_labels_abs_max = self.op_abs_max.apply_preprocessing(self.labels)
-        self.assertEqual((10, 3), prep_labels_abs_max.shape)
-        removed_label_names = [
-            'first_layer_roughness',
-            'ambient_sld'
-        ]
-        self.assertTrue(all(label_name in removed_labels_abs_max.columns for label_name in removed_label_names))
-
-        remaining_labels = [
-            'second_layer_thickness',
-            'first_layer_sld',
-            'second_layer_sld'
-        ]
-        self.assertTrue(all(label_name in prep_labels_abs_max.columns for label_name in remaining_labels))
-
-        mock_predicted_labels_abs_max = np.array(prep_labels_abs_max)
-        restored_labels_abs_max = self.op_abs_max.restore_labels(mock_predicted_labels_abs_max)
-        self.assertTrue(all(label_name in restored_labels_abs_max.columns for label_name in remaining_labels + [
-            self.constant_label_name]))
 
 
 if __name__ == '__main__':

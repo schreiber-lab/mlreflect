@@ -11,6 +11,7 @@ class ModelMixer:
         q_values: An array-like object (`list`, `tuple`, `ndarray`, etc.) that contains the q-values in units of
             1/Å at which the reflected intensity will be simulated.
     """
+
     def __init__(self, q_values):
         self._sample_models = []
         self._model_weights = []
