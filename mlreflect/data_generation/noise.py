@@ -29,7 +29,7 @@ def apply_uniform_noise(refl, noise_range):
 
 
 def apply_scaling_factor(refl, scale_factor_range):
-    refl = np.atleast_2d(refl)
+    refl = np.atleast_2d(refl).copy()
     n_curves = len(refl)
     scale_factors = np.random.uniform(*scale_factor_range, n_curves)
     for i in range(n_curves):
