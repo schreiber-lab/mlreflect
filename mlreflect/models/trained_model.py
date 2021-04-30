@@ -67,9 +67,6 @@ class TrainedModel:
     def sample(self):
         return self._sample
 
-    def retrain_model(self):
-        raise NotImplementedError('re-training not yet implemented')
-
     def _load_ip_values(self, ip_values_path: str):
         ip_values = np.loadtxt(ip_values_path)
         self._ip_mean = ip_values[:, 0]
