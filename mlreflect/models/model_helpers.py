@@ -2,7 +2,7 @@ import os
 
 from tensorflow.keras import callbacks as cb
 
-from .. import h5_tools
+from ..utils import h5_tools
 
 
 def create_save_directory(directory_name: str):
