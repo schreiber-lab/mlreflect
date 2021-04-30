@@ -109,6 +109,29 @@ class NoiseGenerator(BaseGenerator):
         return self.input_preprocessor.standardize(refl), np.array(self.labels)[indexes]
 
 
+class UniformNoiseGenerator(NoiseGenerator):
+    def __init__(self, reflectivity, labels, ip, batch_size=32, mode='single', shuffle=True, uniform_noise_range=(1, 1),
+                 scaling_range=(1, 1)):
+        super().__init__(reflectivity, labels, ip, batch_size=batch_size, mode=mode, shuffle=shuffle,
+                         noise_range=None, background_range=None,
+                         relative_background_spread=0)
+        self.uniform_noise_range = uniform_noise_range
+        self.scaling_range = scaling_range
+        self.ip = ip
+
+    def __data_generation(self, indexes):
+        refl = self.reflectivity[indexes]
+        refl = noise.apply_scaling_factor(noise.apply_uniform_noise(refl, self.uniform_noise_range), self.scaling_range)
+
+        return self.ip.standardize(refl), np.array(self.labels)[indexes]
+
+    def __getitem__(self, index):
+        indexes = self.indexes[index * self.batch_size:(index + 1) * self.batch_size]
+        x, y = self.__data_generation(indexes)
+
+        return x, y, [None]
+
+
 class NoiseGeneratorLog(NoiseGenerator):
     def __init__(self, reflectivity, labels, batch_size=32, mode='single', shuffle=True, noise_range=None,
                  background_range=None, relative_background_spread: float = 0.1):
