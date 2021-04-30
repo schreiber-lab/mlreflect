@@ -5,7 +5,7 @@ import numpy as np
 from numpy import ndarray
 from pandas import DataFrame
 
-from .. import MultilayerStructure, ConstantParameter, Parameter
+from ..data_generation import MultilayerStructure, ConstantParameter, Parameter
 from ..utils.label_helpers import convert_to_dataframe
 
 
