@@ -1,3 +1,0 @@
-"""
-Interactive reflectometry profile editor
-"""
