@@ -1,5 +1,39 @@
 # Changelog
 
+## [0.15.2] 2021-04-30
+
+### Added
+
+- Added more docstrings for new classes.
+
+### Changed
+
+- Moved all high-level imports from the `mlreflect` package to its respective sub-packages for a better structure.
+
+### Fixed
+
+- Fixed dependency issues during where requirements are already called before they are installed
+- Added `packaging` module to the requirements
+
+## [0.15.1] 2021-04-30
+
+### Added
+
+- Added `UniformNoiseGenerator` class
+- Added `Trainer` and `TrainedModel` classes to simplify on-the-fly training
+- Added a `default_trained_model.h5` package resource that contains a trained keras model to fit XRR of a single 
+  layer on a Si/SiOx substrate in air/vacuum.
+- Added `DefaultTrainedModel` subclass that automatically loads the default model.
+- Added `CurveFitter` and `SpecFitter` classes for easier on-the-fly fitting.
+
+### Changed
+
+- Update example notebook
+
+### Fixed
+
+- Fixed small bug in `mlreflect.noise.apply_scaling_factor()`. Now it returns a copy of the data.
+
 ## [0.15.0] 2021-04-27
 
 ### Added
