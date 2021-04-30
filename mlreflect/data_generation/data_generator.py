@@ -104,7 +104,7 @@ class ReflectivityGenerator:
 
         noisy_q_values = self._make_noisy_q_values(self.q_values, q_noise_spread, number_of_curves)
 
-        if engine is 'refl1d':
+        if engine == 'refl1d':
             depth = np.fliplr(thicknesses)
             depth = np.hstack((np.ones((number_of_curves, 1)), depth, np.ones((number_of_curves, 1))))
             rho = np.fliplr(slds)
@@ -232,7 +232,7 @@ class ReflectivityGenerator:
         Returns:
             sld_profiles: List of `ndarray` of simulated scattering length density profiles (real part).
         """
-        if len(labels.shape) is not 2:
+        if len(labels.shape) != 2:
             raise ValueError('labels dataframe must have 2 dimensions (#samples, #labels_per_sample)')
 
         number_of_profiles = labels.shape[0]
