@@ -10,6 +10,7 @@ setup(
     author_email='alessandro.greco@uni-tuebingen.de',
     license='GPL3',
     packages=find_packages(),
+    package_data={'mlreflect': ['models/default_trained_model.h5']},
     zip_safe=False,
     install_requires=requirements,
     python_requires='>=3.6'
