@@ -3,7 +3,7 @@ from typing import Union, Tuple
 
 import numpy as np
 from numpy import ndarray
-from ..refl1d.reflectivity import convolve as refl1d_convolve
+from refl1d.reflectivity import convolve as refl1d_convolve
 
 from .distributions import random_logarithmic_distribution
 

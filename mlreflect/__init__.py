@@ -10,7 +10,7 @@ from .training.preprocessing import InputPreprocessor, OutputPreprocessor
 from .utils import h5_tools
 from .utils.check_gpu import check_gpu
 
-__version__ = '0.15.0'
+__version__ = '0.15.1'
 
 __all__ = ['multilayer_reflectivity', 'Parameter', 'ConstantParameter', 'Layer', 'ConstantLayer', 'AmbientLayer',
            'Substrate', 'MultilayerStructure', 'LayerOnSubstrate', 'ReflectivityGenerator', 'InputPreprocessor',

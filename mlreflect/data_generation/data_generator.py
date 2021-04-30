@@ -6,12 +6,12 @@ from numpy import ndarray
 from pandas import DataFrame
 from scipy.special import erf
 from tqdm import tqdm
+from refl1d.reflectivity import reflectivity as refl1d_engine
 
 from .distributions import sample_distribution
 from .multilayer import MultilayerStructure
 from .parameters import Parameter, ConstantParameter
 from .reflectivity import multilayer_reflectivity as builtin_engine
-from ..refl1d.reflectivity import reflectivity as refl1d_engine
 from ..utils.performance_tools import timer
 
 

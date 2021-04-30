@@ -1,13 +1,11 @@
 from setuptools import setup, find_packages
 
-import mlreflect
-
 with open('requirements.txt') as file:
     requirements = file.readlines()
 
 setup(
     name='mlreflect',
-    version=mlreflect.__version__,
+    version='0.15.1',
     author='Alessandro Greco',
     author_email='alessandro.greco@uni-tuebingen.de',
     license='GPL3',
