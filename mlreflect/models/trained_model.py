@@ -11,6 +11,17 @@ from ..data_generation import MultilayerStructure
 
 
 class TrainedModel:
+    """Container object for trained keras models. Contains other information necessary to predict reflectivity data.
+
+    Object can be loaded from variables or from a saved .h5 file.
+
+    Properties:
+        sample:
+        keras_model:
+        q_values:
+        ip_mean:
+        ip_std:
+    """
     def __init__(self):
         self._sample = None
         self._keras_model = None
@@ -20,6 +31,15 @@ class TrainedModel:
 
     def from_variable(self, model: Model, sample: MultilayerStructure, q_values: ndarray, ip_mean: ndarray,
                       ip_std: ndarray):
+        """Populates the TrainedModel container with the given arguments.
+
+        Args:
+            model: Trained keras model.
+            sample: MultiLayer object of the sample structure that what used for training
+            q_values: q values that were used for training
+            ip_mean: Mean values of all training inputs used for input standardization.
+            ip_std: Standard deviation of all training inputs used for input standardization.
+        """
         self._sample = sample
         self._keras_model = model
         self._q_values = q_values
@@ -27,6 +47,11 @@ class TrainedModel:
         self._ip_std = ip_std
 
     def from_file(self, file_name: str):
+        """Populates the TrainedModel container with data saved in the given .h5 file.
+
+        Args:
+            file_name: Full path to the .h5 file that contains the saved data.
+        """
         self._keras_model = models.load_model(file_name)
         sample = MultilayerStructure()
         with h5py.File(file_name, 'r') as model_file:
@@ -38,6 +63,11 @@ class TrainedModel:
             self._ip_std = np.array(model_file['prediction_params/ip_std'])
 
     def save_model(self, file_name: str):
+        """Saves the data in the TrainedModel container to an .h5 file.
+
+        Args:
+            file_name: Full path to the .h5 file.
+        """
         models.save_model(self._keras_model, file_name)
         sample_json = json.dumps(self._sample.to_dict())
         with h5py.File(file_name, 'a') as model_file:
@@ -74,6 +104,7 @@ class TrainedModel:
 
 
 class DefaultTrainedModel(TrainedModel):
+    """Populated TrainedModel container for a single layer on a Si/SiOx substrate."""
     def __init__(self):
         super().__init__()
         self.from_file(pkg_resources.resource_filename(__name__, 'default_trained_model.h5'))

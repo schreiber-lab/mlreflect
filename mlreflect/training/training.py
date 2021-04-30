@@ -1,15 +1,25 @@
 import datetime
 
 from tensorflow import keras
+from numpy import ndarray
+from typing import Tuple
 
 from . import UniformNoiseGenerator
 from ..data_generation import noise, ReflectivityGenerator
+from ..data_generation import MultilayerStructure
 from ..models import TrainedModel
 from ..training import InputPreprocessor, OutputPreprocessor
 
 
 class Trainer:
-    def __init__(self, sample_structure, q_values, random_seed=None):
+    """Train a neural network model for a given sample structure and q values
+
+    Args:
+        sample_structure: MultilayerStructure object that describes the sample. Should only have one non-constant layer.
+        q_values: ndarray of the q values used for training. Should be similar to the experimental q values.
+        random_seed: random seed for the training data generation. `None` means the seed is chosen randomly.
+    """
+    def __init__(self, sample_structure: MultilayerStructure, q_values: ndarray, random_seed=None):
         self._sample_structure = sample_structure
         self._q_values = q_values
         self._generator = ReflectivityGenerator(q_values, sample_structure, random_seed)
@@ -23,8 +33,9 @@ class Trainer:
 
         self.keras_model = self._prepare_model(len(q_values), len(self.output_preprocessor.used_labels))
 
-    def generate_training_data(self, n=2 ** 17):
-        labels = self._generator.generate_random_labels(n)
+    def generate_training_data(self, training_samples: int = 2 ** 17):
+        """Generate a training data set for training the neural network."""
+        labels = self._generator.generate_random_labels(training_samples)
         reflectivity = self._generator.simulate_reflectivity(labels)
 
         self.training_data = {
@@ -34,7 +45,21 @@ class Trainer:
 
         self.input_preprocessor = self._prepare_input_preprocessor()
 
-    def train(self, n_epochs=175, batch_size=512, verbose=1, val_split=0.2):
+    def train(self, n_epochs=175, batch_size=512, verbose=1, val_split=0.2) -> Tuple[TrainedModel, 'History']:
+        """Train a fully-connected neural network with the generated training data.
+
+        Args:
+            n_epochs: Number of epochs to train for.
+            batch_size: Number of curves per training batch. Must be smaller than `val_split` times the training set
+                size.
+            verbose: Determines the amount of text output during training (0, 1, 2).
+            val_split: The fraction of the training set that is withheld for validation.
+
+        Returns:
+            trained_model: TrainedModel object that contains the trained keras model as well as other parameters
+                necessary to predict test data.
+            history: Training history output from keras model.fit().
+        """
         if not self.has_training_data:
             raise ValueError('must first generate training data')
         prep_labels, removed_labels = self.output_preprocessor.apply_preprocessing(self.training_data['labels'])
