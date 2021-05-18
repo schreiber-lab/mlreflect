@@ -4,9 +4,9 @@ import numpy as np
 import pandas as pd
 from numpy import ndarray
 from pandas import DataFrame
+from refl1d.reflectivity import reflectivity as refl1d_engine
 from scipy.special import erf
 from tqdm import tqdm
-from refl1d.reflectivity import reflectivity as refl1d_engine
 
 from .distributions import sample_distribution
 from .multilayer import MultilayerStructure
@@ -95,44 +95,63 @@ class ReflectivityGenerator:
         if engine not in valid_engines:
             raise ValueError(f'"{engine}" not a valid engine')
 
-        number_of_q_values = len(self.q_values)
-        number_of_curves = labels.shape[0]
-
         thicknesses, roughnesses, slds = self.separate_labels_by_category(labels)
 
-        reflectivity_curves = np.zeros([number_of_curves, number_of_q_values])
+        number_of_curves = len(thicknesses)
 
         noisy_q_values = self._make_noisy_q_values(self.q_values, q_noise_spread, number_of_curves)
 
         if engine == 'refl1d':
-            depth = np.fliplr(thicknesses)
-            depth = np.hstack((np.ones((number_of_curves, 1)), depth, np.ones((number_of_curves, 1))))
-            rho = np.fliplr(slds)
-
-            for curve in tqdm(range(number_of_curves)):
-                params = {'kz': noisy_q_values[curve, :] / 2, 'depth': depth[curve, :],
-                          'sigma': np.flip(roughnesses[curve, :])}
-
-                this_rho = rho[curve, :]
-                if np.sum(np.iscomplex(this_rho)) > 0:
-                    irho = this_rho.imag
-                    this_rho = this_rho.real
-                    params['irho'] = irho
-                params['rho'] = this_rho
-
-                reflectivity = refl1d_engine(**params)
-                del params
-                reflectivity_curves[curve, :] = reflectivity
+            try:
+                return self._refl1d(thicknesses, roughnesses, slds, noisy_q_values)
+            except ImportError as error:
+                print('Cannot import refl1d package. Using builtin Python method.')
+                print(error)
+                return self._builtin(thicknesses, roughnesses, slds, noisy_q_values)
         else:
-            thicknesses_si = thicknesses * 1e-10
-            roughnesses_si = roughnesses * 1e-10
-            slds_si = slds * 1e14
-            q_values_si = noisy_q_values * 1e10
+            return self._builtin(thicknesses, roughnesses, slds, noisy_q_values)
 
-            for curve in tqdm(range(number_of_curves)):
-                reflectivity = builtin_engine(q_values_si[curve, :], thicknesses_si[curve, :], roughnesses_si[curve, :],
-                                              slds_si[curve, :-1], slds_si[curve, -1])
-                reflectivity_curves[curve, :] = reflectivity
+    @staticmethod
+    def _refl1d(thicknesses, roughnesses, slds, q_values):
+        number_of_q_values = q_values.shape[1]
+        number_of_curves = thicknesses.shape[0]
+
+        reflectivity_curves = np.zeros([number_of_curves, number_of_q_values])
+        depth = np.fliplr(thicknesses)
+        depth = np.hstack((np.ones((number_of_curves, 1)), depth, np.ones((number_of_curves, 1))))
+        rho = np.fliplr(slds)
+
+        for curve in tqdm(range(number_of_curves)):
+            params = {'kz': q_values[curve, :] / 2, 'depth': depth[curve, :],
+                      'sigma': np.flip(roughnesses[curve, :])}
+
+            this_rho = rho[curve, :]
+            if np.sum(np.iscomplex(this_rho)) > 0:
+                irho = this_rho.imag
+                this_rho = this_rho.real
+                params['irho'] = irho
+            params['rho'] = this_rho
+
+            reflectivity = refl1d_engine(**params)
+            del params
+            reflectivity_curves[curve, :] = reflectivity
+        return reflectivity_curves
+
+    @staticmethod
+    def _builtin(thicknesses, roughnesses, slds, q_values):
+        number_of_q_values = q_values.shape[1]
+        number_of_curves = thicknesses.shape[0]
+
+        reflectivity_curves = np.zeros([number_of_curves, number_of_q_values])
+        thicknesses_si = thicknesses * 1e-10
+        roughnesses_si = roughnesses * 1e-10
+        slds_si = slds * 1e14
+        q_values_si = q_values * 1e10
+
+        for curve in tqdm(range(number_of_curves)):
+            reflectivity = builtin_engine(q_values_si[curve, :], thicknesses_si[curve, :], roughnesses_si[curve, :],
+                                          slds_si[curve, :-1], slds_si[curve, -1])
+            reflectivity_curves[curve, :] = reflectivity
 
         return reflectivity_curves
 
@@ -260,7 +279,7 @@ class ReflectivityGenerator:
     def make_sld_profile(self, thickness: ndarray, sld: ndarray, roughness: ndarray, sld_substrate: float, sld_ambient:
     float) -> Tuple[ndarray, ndarray]:
         """Generate scattering length density profile in units 1/Å^-2 * 10^-6 with height in units Å.
-        
+
         Args:
             thickness: ndarray of layer thicknesses in units Å from bottom to top. For no layers (only substrate) 
                 provide empty tuple ``(,)``.
