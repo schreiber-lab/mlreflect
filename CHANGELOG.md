@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.16.0] 2021-05-18
+
+### Added
+
+- Added an exception to the `ReflectivityGenerator.simulate_reflectivity()` method that allows a fall-back to the 
+  built-in reflectivity simulation if for some reason the `refl1d` package cannot be loaded (for example if the C 
+  code compilation failed).
+- Added various docstrings for the `curve_fitter` module.
+- Added `fit_range()` method to the `SpecFitter` class.
+- Added more requirements to `requirements.txt` and added specific version numbers.
+
+### Changed
+
+- Made keyword arguments for `SpecFitter` class parameter methods explicit.
+- Shift predicted `predicted_q_values` output from `SpecFitter` class by `dq` argument.
+
+### Fixed
+
+- Fixed test imports
+
 ## [0.15.2] 2021-04-30
 
 ### Added
