@@ -3,9 +3,8 @@ import unittest
 import numpy as np
 from numpy.testing import assert_equal
 
-from mlreflect import InputPreprocessor
-from mlreflect import Layer, MultilayerStructure, AmbientLayer, Substrate
-from mlreflect import ReflectivityGenerator
+from mlreflect.training import InputPreprocessor
+from mlreflect.data_generation import ReflectivityGenerator, Layer, MultilayerStructure, AmbientLayer, Substrate
 from mlreflect.training.noise_generator import NoiseGenerator
 
 

@@ -4,8 +4,7 @@ import numpy as np
 from numpy import ndarray
 from pandas import DataFrame
 
-from mlreflect import Layer, MultilayerStructure, Substrate, AmbientLayer
-from mlreflect import ReflectivityGenerator
+from mlreflect.data_generation import ReflectivityGenerator, Layer, MultilayerStructure, Substrate, AmbientLayer
 
 
 class TestReflectivityGeneratorMethods(unittest.TestCase):

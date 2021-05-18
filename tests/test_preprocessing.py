@@ -3,9 +3,8 @@ import unittest
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 
-from mlreflect import InputPreprocessor, OutputPreprocessor
-from mlreflect import Layer, MultilayerStructure, AmbientLayer, Substrate
-from mlreflect import ReflectivityGenerator
+from mlreflect.training import InputPreprocessor, OutputPreprocessor
+from mlreflect.data_generation import ReflectivityGenerator, Layer, MultilayerStructure, AmbientLayer, Substrate
 
 
 class TestInputPreprocessorMethods(unittest.TestCase):

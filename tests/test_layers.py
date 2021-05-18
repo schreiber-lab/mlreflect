@@ -1,6 +1,6 @@
 import unittest
 
-from mlreflect import Layer
+from mlreflect.data_generation import Layer
 
 
 class TestLayerMethods(unittest.TestCase):
