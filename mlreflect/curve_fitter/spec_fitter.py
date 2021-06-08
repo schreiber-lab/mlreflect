@@ -1,9 +1,8 @@
-import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 from xrrloader import SpecLoader
 
 from . import CurveFitter
+from .results import FitResult, FitResultSeries
 from ..models import TrainedModel, DefaultTrainedModel
 
 
@@ -42,92 +41,89 @@ class SpecFitter:
     def footprint_params(self):
         return self._footprint_params
 
-    def fit(self, scan_number: int, trim_front: int = 0, dq: float = 0.0, factor: float = 1.0, plot=False):
+    def fit(self, scan_number: int, trim_front: int = None, trim_back: int = None, theta_offset: float = 0.0,
+            dq: float = 0.0, factor: float = 1.0, plot=False, polish=True) -> FitResult:
         """Extract scan from SPEC file and predict thin film parameters.
 
         Args:
             scan_number: SPEC scan number of the scan that is to be fitted.
             trim_front: How many intensity points are cropped from the beginning.
+            trim_back: How many intensity points are cropped from the end.
+            theta_offset: Angular correction that is added before transformation to q space.
             dq: Q-shift that is applied before interpolation of the data to the trained q values. Can sometimes
                 improve the results if the total reflection edge is not perfectly aligned.
             factor: Multiplicative factor that is applied to the data after interpolation. Can sometimes
                 improve the results if the total reflection edge is not perfectly aligned.
             plot: If set to `True`, the intensity prediction is shown in a plot.
+            polish: If `True`, the predictions will be refined with a simple least log mean squares minimization via
+                `scipy.optimize.minimize`. This can often improve the "fit" of the model curve to the data at the
+                expense of higher prediction times.
 
         Returns:
-            output_dict = {
-                'corrected_intensity': Extracted scan intensity with footprint correction
-                'q_values_input': Corresponding q values for the extracted scan in 1/A,
-                'predicted_intensity': Predicted simulated intensity,
-                'q_values_prediction': Corresponding q values for the predicted intensity in 1/A,
-                'predicted_labels': Predicted thin film parameters as Pandas DataFrame
-            }
+            FitResult
         """
         try:
-            scan = self._spec_loader.load_scan(scan_number, trim_front)
+            scan = self._spec_loader.load_scan(scan_number=scan_number, trim_front=trim_front, trim_back=trim_back)
         except KeyError:
             print(f'scan {scan_number} could not be found in {self._spec_file}')
             return
+        scan.scattering_angle += theta_offset
+        predicted_refl, predicted_parameters = self._curve_fitter.fit_curve(scan.corrected_intensity, scan.q,
+                                                                            dq, factor, polish)
 
-        predicted_refl, predicted_labels = self._curve_fitter.fit_curve(scan.corrected_intensity, scan.q, dq, factor)
-
-        output = {
-            'corrected_intensity': scan.corrected_intensity,
-            'q_values_input': scan.q,
-            'predicted_intensity': predicted_refl,
-            'q_values_prediction': self._trained_model.q_values - dq,
-            'predicted_labels': predicted_labels
-        }
+        fit_result = FitResult(scan_number=scan_number,
+                               timestamp=scan.timestamp,
+                               corrected_reflectivity=scan.corrected_intensity,
+                               q_values_input=scan.q,
+                               predicted_reflectivity=predicted_refl,
+                               q_values_prediction=self._trained_model.q_values - dq,
+                               predicted_parameters=predicted_parameters,
+                               sample=self._trained_model.sample)
         if plot:
-            self._plot_prediction(**output)
-        return output
+            parameters = [self.trained_model.sample.layers[-1].name + param for param in ('_thickness', '_roughness',
+                                                                                          '_sld')]
+            fit_result.plot_prediction(parameters)
+            fit_result.plot_sld_profile()
+        return fit_result
 
-    def fit_range(self, scan_range: range, trim_front: int = 0, dq: float = 0.0, factor: float = 1.0):
+    def fit_range(self, scan_range: range, trim_front: int = None, trim_back: int = None, theta_offset: float = 0.0,
+                  dq: float = 0.0, factor: float = 1.0, plot=False, polish=True) -> FitResultSeries:
         """Iterate fit method over a range of scans."""
-        total_output = {
-            'corrected_intensity': [],
-            'q_values_input': [],
-            'predicted_intensity': [],
-            'q_values_prediction': [],
-            'predicted_labels': []
-        }
+
+        fit_results = []
         for i in scan_range:
-            output = self.fit(i, trim_front=trim_front, dq=dq, factor=factor, plot=False)
-            for key in output.keys():
-                total_output[key].append(output[key])
+            fit_results.append(self.fit(i, trim_front=trim_front, trim_back=trim_back, theta_offset=theta_offset, dq=dq,
+                                        factor=factor, plot=False, polish=polish))
 
-        for key in ['corrected_intensity', 'q_values_input', 'predicted_intensity', 'q_values_prediction']:
-            total_output[key] = np.vstack(total_output[key])
-        total_output['predicted_labels'] = pd.concat(total_output['predicted_labels']).reset_index(drop=True)
+        fit_result_series = FitResultSeries(fit_results)
 
-        return total_output
+        if plot:
+            fit_result_series.plot_sld_profiles()
+            parameters = [self.trained_model.sample.layers[-1].name + param for param in ('_thickness', '_roughness',
+                                                                                          '_sld')]
+            fit_result_series.plot_predicted_parameter_range(parameters)
 
-    @staticmethod
-    def _plot_prediction(q_values_input, corrected_intensity, q_values_prediction, predicted_intensity,
-                         predicted_labels):
-        min_q_idx = np.argmin(q_values_prediction)
-        max_q_idx = np.argmax(q_values_prediction)
+        return fit_result_series
 
-        plt.semilogy(q_values_input[min_q_idx:max_q_idx], corrected_intensity[min_q_idx:max_q_idx], 'o', label='data')
-        plt.semilogy(q_values_prediction, predicted_intensity, label='prediction')
-        plt.title('Prediction')
-        plt.xlabel('q [1/A]')
-        plt.ylabel('Intensity [a.u.]')
-        plt.legend()
-
-        labels = ['Film_thickness', 'Film_roughness', 'Film_sld', 'SiOx_thickness']
-        units = {
-            'Film_thickness': 'Å',
-            'Film_roughness': 'Å',
-            'Film_sld': 'x 10$^{-6}$ Å$^{-2}$',
-            'SiOx_thickness': 'Å'
-        }
-        predictions = ''
-        for label in labels:
-            predictions += f'{label}: {float(predicted_labels[label]):0.1f} {units[label]}\n'
-        plt.annotate(predictions, (0.6, 0.75), xycoords='axes fraction', va='top', ha='left')
-
-        plt.show()
+    def show_scans(self, max_scan: int = None, min_scan: int = None):
+        """Show information about all scans from `min_scan` to `max_scan`."""
+        parser = self._spec_loader.parser
+        if max_scan is None:
+            max_scan = np.max(np.asarray(list(parser.scan_info.keys()), dtype=int))
+        else:
+            max_scan = np.min((max_scan, np.max(np.asarray(list(parser.scan_info.keys()), dtype=int))))
+        if min_scan is None:
+            min_scan = np.min(np.asarray(list(parser.scan_info.keys()), dtype=int))
+        else:
+            min_scan = np.max((min_scan, np.min(np.asarray(list(parser.scan_info.keys()), dtype=int))))
+        for i in range(min_scan, max_scan + 1):
+            try:
+                out = f'scan #{i}\n' \
+                      f'\tcommand: {parser.scan_info[str(i)]["spec_command"]}\n' \
+                      f'\ttime: {parser.scan_info[str(i)]["time"]}'
+                print(out)
+            except KeyError:
+                print(f'scan #{i}\n\tnot found')
 
     def set_spec_file(self, spec_file_path: str):
         """Define the full path of the SPEC file from which the scans are read."""
