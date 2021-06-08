@@ -11,7 +11,7 @@ class TestReflectivityGeneratorMethods(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.ambient = AmbientLayer('ambient', 0)
-        cls.layer1 = Substrate('first_layer', 10, 20)
+        cls.layer1 = Substrate('first_layer', 10, 20 + 1j)
         cls.layer2 = Layer('second_layer', (50, 150), 1, (-10, 10))
 
         cls.multilayer = MultilayerStructure()
@@ -46,7 +46,7 @@ class TestReflectivityGeneratorMethods(unittest.TestCase):
 
         self.assertTrue((self.labels['second_layer_roughness'] == 1).all())
 
-        self.assertTrue(np.max(self.labels['first_layer_sld']) <= 20)
+        self.assertTrue(np.max(self.labels['first_layer_sld']) <= 20+1j)
         self.assertTrue(np.min(self.labels['first_layer_sld']) >= 10)
 
         self.assertTrue(np.max(self.labels['second_layer_sld']) <= 10)
