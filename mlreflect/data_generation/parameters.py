@@ -14,7 +14,7 @@ class Parameter:
         name: optional name for the parameter (usually 'thickness', 'roughness' or 'sld')
     """
 
-    def __init__(self, min_value: float, max_value: float, name: str = None):
+    def __init__(self, min_value, max_value, name: str = None):
         if min_value >= max_value:
             raise ValueError('`min_value` must be lower than `max_value`')
         self.min = min_value
@@ -77,7 +77,7 @@ class ConstantParameter(Parameter):
         name: optional name for the parameter (usually 'thickness', 'roughness' or 'sld')
     """
 
-    def __init__(self, value: float, name: str = None):
+    def __init__(self, value, name: str = None):
         self._value = value
         self.name = name
 

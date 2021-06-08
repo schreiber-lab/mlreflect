@@ -59,7 +59,7 @@ class Layer:
     def _set_parameter(param, name=None):
         if isinstance(param, Parameter):
             return param.copy()
-        elif isinstance(param, int) or isinstance(param, float):
+        elif isinstance(param, int) or isinstance(param, float) or isinstance(param, complex):
             return ConstantParameter(param, name)
         else:
             return Parameter(param[0], param[1], name)
@@ -116,7 +116,7 @@ class ConstantLayer(Layer):
     def _set_parameter(param, name=None):
         if isinstance(param, Parameter):
             return param.copy()
-        elif isinstance(param, int) or isinstance(param, float):
+        elif isinstance(param, int) or isinstance(param, float) or isinstance(param, complex):
             return ConstantParameter(param, name)
         else:
             raise ValueError(f'parameter {name} needs to be float or int')
