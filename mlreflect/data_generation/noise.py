@@ -3,7 +3,6 @@ from typing import Union, Tuple
 
 import numpy as np
 from numpy import ndarray
-from refl1d.reflectivity import convolve as refl1d_convolve
 
 from .distributions import random_logarithmic_distribution
 
@@ -144,23 +143,3 @@ def generate_background(number_of_curves: int, number_of_q_values: int,
         return np.random.normal(means, stdevs, (number_of_curves, number_of_q_values)), mean
     else:
         raise TypeError(f'background_base_level must be float, int or tuple and is {type(background_base_level)}')
-
-
-@iterate_over_curves
-def apply_gaussian_convolution(reflectivity_curves: ndarray, q_before: ndarray, q_after: ndarray,
-                               width: ndarray) -> ndarray:
-    """Returns convolved reflectivity curves at q-values given in ``q_before``.
-
-    Args:
-        reflectivity_curves: Array of normalized reflectivity curves
-        q_before: q-values that correspond to the given reflectivity curve
-        q_after: q-values for which the convolved curve is evaluated (shorter than ``q_before``)
-        width: width of the gaussian convolution at each q-value
-
-    Returns:
-        convolved reflectivity curves
-    """
-    if width.all() == 0:
-        return reflectivity_curves
-    else:
-        return refl1d_convolve(q_before, reflectivity_curves, q_after, width)
