@@ -1,9 +1,9 @@
 import numpy as np
-from xrrloader import SpecLoader
 
 from . import CurveFitter
 from .results import FitResult, FitResultSeries
 from ..models import TrainedModel, DefaultTrainedModel
+from ..xrrloader import SpecLoader
 
 
 class SpecFitter:
