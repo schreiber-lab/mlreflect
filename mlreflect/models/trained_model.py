@@ -22,6 +22,7 @@ class TrainedModel:
         ip_mean:
         ip_std:
     """
+
     def __init__(self):
         self._sample = None
         self._keras_model = None
@@ -105,6 +106,7 @@ class TrainedModel:
 
 class DefaultTrainedModel(TrainedModel):
     """Populated TrainedModel container for a single layer on a Si/SiOx substrate."""
+
     def __init__(self):
         super().__init__()
         self.from_file(pkg_resources.resource_filename(__name__, 'default_trained_model.h5'))

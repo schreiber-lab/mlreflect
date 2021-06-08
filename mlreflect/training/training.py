@@ -1,12 +1,12 @@
 import datetime
-
-from tensorflow import keras
-from numpy import ndarray
 from typing import Tuple
 
+from numpy import ndarray
+from tensorflow import keras
+
 from . import UniformNoiseGenerator
-from ..data_generation import noise, ReflectivityGenerator
 from ..data_generation import MultilayerStructure
+from ..data_generation import noise, ReflectivityGenerator
 from ..models import TrainedModel
 from ..training import InputPreprocessor, OutputPreprocessor
 
@@ -19,6 +19,7 @@ class Trainer:
         q_values: ndarray of the q values used for training. Should be similar to the experimental q values.
         random_seed: random seed for the training data generation. `None` means the seed is chosen randomly.
     """
+
     def __init__(self, sample_structure: MultilayerStructure, q_values: ndarray, random_seed=None):
         self._sample_structure = sample_structure
         self._q_values = q_values
@@ -67,13 +68,13 @@ class Trainer:
         n_train = int((1 - val_split) * len(prep_labels))
 
         noise_gen_train = UniformNoiseGenerator(self.training_data['reflectivity'][:n_train], prep_labels[:n_train],
+                                                self.input_preprocessor, batch_size,
+                                                uniform_noise_range=self._uniform_noise_range,
+                                                scaling_range=self._scaling_range)
+        noise_gen_val = UniformNoiseGenerator(self.training_data['reflectivity'][n_train:], prep_labels[n_train:],
                                               self.input_preprocessor, batch_size,
                                               uniform_noise_range=self._uniform_noise_range,
                                               scaling_range=self._scaling_range)
-        noise_gen_val = UniformNoiseGenerator(self.training_data['reflectivity'][n_train:], prep_labels[n_train:],
-                                            self.input_preprocessor, batch_size,
-                                            uniform_noise_range=self._uniform_noise_range,
-                                            scaling_range=self._scaling_range)
         now = datetime.datetime.now()
 
         history = self.keras_model.fit(noise_gen_train, validation_data=noise_gen_val, epochs=n_epochs, verbose=verbose,
@@ -83,7 +84,8 @@ class Trainer:
         print(f'Time needed for training: {then - now}')
 
         trained_model = TrainedModel()
-        trained_model.from_variable(self.keras_model, self._sample_structure, self._q_values, self.input_preprocessor.standard_mean,
+        trained_model.from_variable(self.keras_model, self._sample_structure, self._q_values,
+                                    self.input_preprocessor.standard_mean,
                                     self.input_preprocessor.standard_std)
         return trained_model, history
 
