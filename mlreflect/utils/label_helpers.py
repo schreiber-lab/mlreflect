@@ -8,7 +8,7 @@ from pandas import DataFrame
 
 def convert_to_dataframe(labels: Union[DataFrame, ndarray], label_names: List[str]) -> DataFrame:
     if type(labels) is ndarray:
-        label_df = pd.DataFrame(data=labels, columns=label_names)
+        label_df = pd.DataFrame(data=labels.copy(), columns=label_names)
     elif type(labels) is DataFrame:
         label_df = labels.copy()
     else:
