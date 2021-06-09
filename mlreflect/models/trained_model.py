@@ -3,6 +3,8 @@ import json
 import h5py
 import numpy as np
 import pkg_resources
+from importlib import resources
+from pathlib import Path
 from numpy import ndarray
 from tensorflow.keras import models
 from tensorflow.keras.models import Model
@@ -109,4 +111,5 @@ class DefaultTrainedModel(TrainedModel):
 
     def __init__(self):
         super().__init__()
-        self.from_file(pkg_resources.resource_filename(__name__, 'default_trained_model.h5'))
+        model_path = Path(__file__).parents[1] / Path('resources', 'models', 'default_trained_model_with_absorption.h5')
+        self.from_file(str(model_path))
