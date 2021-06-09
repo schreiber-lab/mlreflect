@@ -27,7 +27,7 @@ class TestReflectivityGeneratorMethods(unittest.TestCase):
             'substrate': {
                 'name': 'first_layer',
                 'roughness': 10,
-                'sld': (20 + 1j)}}
+                'sld': {'re': 20.0, 'im': 1.0}}}
 
     def test_to_dict(self):
         mutlilayer_dict = self.multilayer.to_dict()
