@@ -1,6 +1,7 @@
-from collections import Iterable
 from copy import copy
-from typing import Union
+from typing import Union, Iterable
+
+import numpy as np
 
 from .parameters import Parameter, ConstantParameter
 
@@ -19,8 +20,10 @@ class Layer:
         Layer object
     """
 
-    def __init__(self, name: str, thickness: Union[float, Iterable, Parameter],
-                 roughness: Union[float, Iterable, Parameter], sld: Union[float, Iterable, Parameter]):
+    def __init__(self, name: str,
+                 thickness: Union[float, Iterable, Parameter],
+                 roughness: Union[float, Iterable, Parameter],
+                 sld: Union[float, complex, Iterable, Parameter]):
         self.name = name
 
         self.thickness = self._set_parameter(thickness, 'thickness')
@@ -45,24 +48,43 @@ class Layer:
     def to_dict(self):
         layer_dict = {'name': self.name}
         if hasattr(self, 'thickness'):
-            layer_dict['thickness'] = self.thickness.value
+            layer_dict['thickness'] = self._parse_parameter(self.thickness)
         if hasattr(self, 'roughness'):
-            layer_dict['roughness'] = self.roughness.value
+            layer_dict['roughness'] = self._parse_parameter(self.roughness)
         if hasattr(self, 'sld'):
-            layer_dict['sld'] = self.sld.value
+            layer_dict['sld'] = self._parse_parameter(self.sld)
         return layer_dict
 
     def copy(self):
         return copy(self)
 
+    def _parse_parameter(self, parameter):
+        if isinstance(parameter.value, tuple):
+            return self._if_complex_to_dict(parameter.value[0]), self._if_complex_to_dict(parameter.value[1])
+        else:
+            return self._if_complex_to_dict(parameter.value)
+
     @staticmethod
-    def _set_parameter(param, name=None):
+    def _if_complex_to_dict(value):
+        if np.iscomplex(value):
+            return {'re': np.real(value), 'im': np.imag(value)}
+        else:
+            return value
+
+    def _set_parameter(self, param, name=None):
         if isinstance(param, Parameter):
             return param.copy()
-        elif isinstance(param, int) or isinstance(param, float) or isinstance(param, complex):
-            return ConstantParameter(param, name)
+        elif isinstance(param, Iterable) and not isinstance(param, dict):
+            return Parameter(self._if_dict_to_complex(param[0]), self._if_dict_to_complex(param[1]), name)
         else:
-            return Parameter(param[0], param[1], name)
+            return ConstantParameter(self._if_dict_to_complex(param), name)
+
+    @staticmethod
+    def _if_dict_to_complex(value):
+        if isinstance(value, dict):
+            return value['re'] + value['im'] * 1j
+        else:
+            return value
 
     def __copy__(self):
         return Layer(self.name, self.thickness.copy(), self.roughness.copy(), self.sld.copy())
@@ -90,7 +112,10 @@ class ConstantLayer(Layer):
         Layer object
     """
 
-    def __init__(self, name: str, thickness: float, roughness: float, sld: float):
+    def __init__(self, name: str,
+                 thickness: Union[float, ConstantParameter],
+                 roughness: Union[float, ConstantParameter],
+                 sld: Union[float, complex, ConstantParameter]):
         self.name = name
 
         self.thickness = self._set_parameter(thickness, 'thickness')
@@ -112,14 +137,13 @@ class ConstantLayer(Layer):
             'max_sld': self.sld.max,
         }
 
-    @staticmethod
-    def _set_parameter(param, name=None):
+    def _set_parameter(self, param, name=None):
         if isinstance(param, Parameter):
             return param.copy()
-        elif isinstance(param, int) or isinstance(param, float) or isinstance(param, complex):
-            return ConstantParameter(param, name)
+        elif isinstance(param, Iterable) and not isinstance(param, dict):
+            ValueError(f'parameter {name} needs to be float or int')
         else:
-            raise ValueError(f'parameter {name} needs to be float or int')
+            return ConstantParameter(self._if_dict_to_complex(param), name)
 
     def __copy__(self):
         return ConstantLayer(self.name, self.thickness.copy(), self.roughness.copy(), self.sld.copy())
@@ -129,7 +153,9 @@ class ConstantLayer(Layer):
 
 
 class Substrate(ConstantLayer):
-    def __init__(self, name: str, roughness: float, sld: float):
+    def __init__(self, name: str,
+                 roughness: Union[float, ConstantParameter],
+                 sld: Union[float, complex, ConstantParameter]):
         self.name = name
 
         self.roughness = self._set_parameter(roughness, 'roughness')
@@ -160,7 +186,8 @@ class Substrate(ConstantLayer):
 
 
 class AmbientLayer(ConstantLayer):
-    def __init__(self, name: str, sld: float):
+    def __init__(self, name: str,
+                 sld: Union[float, complex, ConstantParameter]):
         self.name = name
         self.sld = self._set_parameter(sld, 'sld')
 
