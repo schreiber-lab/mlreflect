@@ -105,7 +105,7 @@ class SpecFitter:
 
         return fit_result_series
 
-    def show_scans(self, max_scan: int = None, min_scan: int = None):
+    def show_scans(self, min_scan: int = None, max_scan: int = None):
         """Show information about all scans from `min_scan` to `max_scan`."""
         parser = self._spec_loader.parser
         if max_scan is None:
