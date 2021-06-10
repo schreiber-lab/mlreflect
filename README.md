@@ -20,7 +20,11 @@ or
 
 `from mlreflect import <module>`
 
-An example of how to generate training data, train the model and test it on experimental data is shown in the _data/notebooks/usage_example.ipynb_ Jupyter notebook.
+An example of how to generate training data, train the model and test it on experimental data is shown in the 
+_example/notebooks/training_example.ipynb_ Jupyter notebook.
+
+An example of how to use the default pre-trained model for single layers on Si/SiOx substrates to fit data directly 
+from a SPEC file is shown in _examples/notebooks/spec_usage_example.ipynb_ Jupyter notebook.
 
 ## Authors
 #### Main author
