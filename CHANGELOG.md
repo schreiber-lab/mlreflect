@@ -1,5 +1,38 @@
 # Changelog
 
+## [0.17.1] 2021-06-10
+
+### Added
+
+- The `xrrloader` package is now included in the package code to avoid dependency problems.
+- Added optional LMS fit refinement of the neural network prediction based on the log mean squared error of the 
+  measured curve and predicted curve. To use this, the keyword argument `polish=True` has to be passed to the fit 
+  methods of the `CurveFitter` and `SpecFitter` class.
+- The `SpecFitter` class now provides its output as a `FitResult` object, which can be used to plot the prediction 
+  or access different parts of the result more easily. The results plot now also shows the SLD profile of the 
+  prediction.
+- Added two example files as package resources, which are now detailed in `MANIFEST.in`:
+  * `resources/examples/example.spec` is an example file that can be used to test `SpecFitter`.
+  * `resources/examples/example.dat` is an ascii file that contains reflectivity data that can be used to test 
+    `CurveFitter`.
+- Complex layer parameters are now fully supported (in particular for complex SLDs).
+- Added more tests.
+
+### Changed
+
+- The DefaultTrainedModel now has only 3 prediction parameters `Film_thickness`, `Film_roughness` and `Film_sld`,
+  i.e. the thickness of the oxide layer is no longer predicted.
+- The default model is now trained with absorption of the Si/SiOx substrate included.
+- The number of weights of the DefaultTrainedModel has been reduced to save memory and prediction time.
+- `CurveFitter.fit_curve()` can now also fit 2D arrays of data (instead of only single curves)
+- Removed warning that was printed via print if the `refl1d` package is not available. Now it is `warnings.warn()` 
+  and shows up only when the `ReflectivityGenerator` object is initialized.
+
+### Fixed
+
+- Fixed order of arguments of `SpecFitter.show_scans()`.
+- Fixed wrong in-place behavior of `utils.label_helpers.convert_to_dataframe()`.
+
 ## [0.16.0] 2021-05-18
 
 ### Added

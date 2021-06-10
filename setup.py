@@ -5,7 +5,7 @@ with open('requirements.txt') as file:
 
 setup(
     name='mlreflect',
-    version='0.17.0',
+    version='0.17.1',
     author='Alessandro Greco',
     author_email='alessandro.greco@uni-tuebingen.de',
     license='GPL3',
