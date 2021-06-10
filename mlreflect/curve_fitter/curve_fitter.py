@@ -1,6 +1,7 @@
 import warnings
 
 import numpy as np
+import pandas as pd
 from numpy import ndarray
 
 from .minimizer import least_log_mean_squares_fit
@@ -56,13 +57,17 @@ class CurveFitter:
         self._ensure_positive_parameters(restored_predicted_parameters)
 
         if polish:
-            polished_parameters = least_log_mean_squares_fit(corrected_curve[0], restored_predicted_parameters,
-                                                             self.generator, self.op)
+            polished_parameters = []
+            for i in range(len(corrected_curve)):
+                polished_parameters.append(least_log_mean_squares_fit(corrected_curve[i],
+                                                                      restored_predicted_parameters[i:(i+1)],
+                                                                      self.generator, self.op))
+            polished_parameters = pd.concat(polished_parameters).reset_index(drop=True)
             self._ensure_positive_parameters(polished_parameters)
-            predicted_refl = self.generator.simulate_reflectivity(polished_parameters, progress_bar=False)[0]
+            predicted_refl = self.generator.simulate_reflectivity(polished_parameters, progress_bar=False)
             return predicted_refl, polished_parameters
         else:
-            predicted_refl = self.generator.simulate_reflectivity(restored_predicted_parameters, progress_bar=False)[0]
+            predicted_refl = self.generator.simulate_reflectivity(restored_predicted_parameters, progress_bar=False)
             return predicted_refl, restored_predicted_parameters
 
     def _interpolate_intensity(self, intensity: ndarray, q_values: ndarray):

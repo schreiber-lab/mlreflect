@@ -24,11 +24,11 @@ class TestCurveFitterMethods(unittest.TestCase):
     def test_fit_curve(self):
         curve_fitter = CurveFitter(self.trained_model)
         pred_refl, labels = curve_fitter.fit_curve(self.reflectivity, self.q)
-        self.assertIsInstance(pred_refl, ndarray)
+        self.assertIsInstance(pred_refl[0], ndarray)
         self.assertIsInstance(labels, DataFrame)
 
         model_q = self.trained_model.q_values
-        self.assertEqual(len(model_q), len(pred_refl))
+        self.assertEqual(len(model_q), len(pred_refl[0]))
 
 
 if __name__ == '__main__':

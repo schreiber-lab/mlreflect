@@ -75,7 +75,7 @@ class SpecFitter:
                                timestamp=scan.timestamp,
                                corrected_reflectivity=scan.corrected_intensity,
                                q_values_input=scan.q,
-                               predicted_reflectivity=predicted_refl,
+                               predicted_reflectivity=predicted_refl[0],
                                q_values_prediction=self._trained_model.q_values - dq,
                                predicted_parameters=predicted_parameters,
                                sample=self._trained_model.sample)
