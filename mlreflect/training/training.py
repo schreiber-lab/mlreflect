@@ -100,11 +100,11 @@ class Trainer:
     def _prepare_model(n_input: int, n_output: int):
         model = keras.models.Sequential()
 
-        model.add(keras.layers.Dense(1000, input_dim=n_input))
+        model.add(keras.layers.Dense(500, input_dim=n_input))
         model.add(keras.layers.Activation('relu'))
 
         for i in range(2):
-            model.add(keras.layers.Dense(1000))
+            model.add(keras.layers.Dense(500))
             model.add(keras.layers.Activation('relu'))
 
         model.add(keras.layers.Dense(n_output))
