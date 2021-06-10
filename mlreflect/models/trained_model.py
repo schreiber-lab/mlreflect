@@ -1,10 +1,8 @@
 import json
+from pathlib import Path
 
 import h5py
 import numpy as np
-import pkg_resources
-from importlib import resources
-from pathlib import Path
 from numpy import ndarray
 from tensorflow.keras import models
 from tensorflow.keras.models import Model
