@@ -1,3 +1,4 @@
+import warnings
 from typing import Tuple, List
 
 import numpy as np
@@ -26,6 +27,14 @@ class ReflectivityGenerator:
     """
 
     def __init__(self, q_values: ndarray, sample: MultilayerStructure, random_seed: int = None):
+        try:
+            from refl1d.reflectivity import reflectivity as refl1d_engine
+            self._refl1d_engine = refl1d_engine
+        except ImportError as error:
+            self._refl1d_engine = None
+            warnings.filterwarnings('once', '.*cannot import refl1d package.*')
+            warnings.warn(f'Cannot import refl1d package ({error}).\nUsing builtin Python method.', ImportWarning)
+
         if random_seed is not None:
             np.random.seed(random_seed)
         self.q_values = np.asarray(q_values)
@@ -130,19 +139,15 @@ class ReflectivityGenerator:
 
         noisy_q_values = self._make_noisy_q_values(self.q_values, q_noise_spread, number_of_curves)
 
+        if self._refl1d_engine is None:
+            engine = 'builtin'
+
         if engine == 'refl1d':
-            try:
-                from refl1d.reflectivity import reflectivity as refl1d_engine
-                return self._refl1d(thicknesses, roughnesses, slds, noisy_q_values, progress_bar)
-            except ImportError as error:
-                print(f'Cannot import refl1d package ({error}).\nUsing builtin Python method.')
-                return self._builtin(thicknesses, roughnesses, slds, noisy_q_values, progress_bar)
+            return self._refl1d(thicknesses, roughnesses, slds, noisy_q_values, progress_bar)
         else:
             return self._builtin(thicknesses, roughnesses, slds, noisy_q_values, progress_bar)
 
-    @staticmethod
-    def _refl1d(thicknesses, roughnesses, slds, q_values, progress_bar=True):
-        from refl1d.reflectivity import reflectivity as refl1d_engine
+    def _refl1d(self, thicknesses, roughnesses, slds, q_values, progress_bar=True):
         number_of_q_values = q_values.shape[1]
         number_of_curves = thicknesses.shape[0]
 
@@ -162,7 +167,7 @@ class ReflectivityGenerator:
                 params['irho'] = irho
             params['rho'] = this_rho
 
-            reflectivity = refl1d_engine(**params)
+            reflectivity = self._refl1d_engine(**params)
             del params
             reflectivity_curves[curve, :] = reflectivity
         return reflectivity_curves
