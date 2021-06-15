@@ -26,6 +26,11 @@ class FitResult:
         self.predicted_parameters = predicted_parameters
         self.sample = sample
 
+    @property
+    def sld_profile(self):
+        generator = ReflectivityGenerator(self.q_values_prediction, self.sample)
+        return generator.simulate_sld_profiles(self.predicted_parameters, progress_bar=False)[0]
+
     def save_predicted_parameters(self, path: str, delimiter='\t'):
         """Save all predicted parameters in a text file with the given delimiter."""
         self.predicted_parameters.to_csv(path, sep=delimiter)
@@ -72,8 +77,7 @@ class FitResult:
 
     def plot_sld_profile(self):
         """Plots the SLD profile of the predicted parameters."""
-        generator = ReflectivityGenerator(self.q_values_prediction, self.sample)
-        profile = generator.simulate_sld_profiles(self.predicted_parameters, progress_bar=False)[0]
+        profile = self.sld_profile
 
         plt.plot(profile[0], profile[1])
         plt.ylabel('SLD [10$^{-6}$ Å$^{-2}$]')
@@ -95,6 +99,16 @@ class FitResultSeries:
             [fit_result.predicted_parameters for fit_result in fit_results_list])
         self.sample = fit_results_list[0].sample
 
+    @property
+    def delta_t(self):
+        datetime_list = [datetime.datetime.strptime(t, '%a %b %d %H:%M:%S %Y') for t in self.timestamp]
+        return np.array([(dt - datetime_list[0]).total_seconds() / 60 for dt in datetime_list])
+
+    @property
+    def sld_profiles(self):
+        generator = ReflectivityGenerator(self.q_values_prediction, self.sample)
+        return generator.simulate_sld_profiles(self.predicted_parameters, progress_bar=False)
+
     def save_predicted_parameters(self, path: str, delimiter='\t'):
         """Save all predicted parameters in a text file with the given delimiter."""
         self.predicted_parameters.to_csv(path, sep=delimiter)
@@ -115,9 +129,6 @@ class FitResultSeries:
         """Plot predicted parameters in `parameters` against time (relative to the first scan)."""
         n_labels = len(parameters)
 
-        datetime_list = [datetime.datetime.strptime(t, '%a %b %d %H:%M:%S %Y') for t in self.timestamp]
-        delta_t = np.array([(dt - datetime_list[0]).total_seconds() / 60 for dt in datetime_list])
-
         fig = plt.figure(figsize=(5, 10))
 
         for i, param in enumerate(parameters):
@@ -128,7 +139,7 @@ class FitResultSeries:
             else:
                 raise ValueError(f"couldn't determine unit for parameter {param} (must be thickness, roughness or sld)")
             plt.subplot(n_labels, 1, i + 1)
-            plt.plot(delta_t, self.predicted_parameters[param])
+            plt.plot(self.delta_t, self.predicted_parameters[param])
             plt.xlabel('Time [min]')
             plt.ylabel(f'{param} [{unit}]')
             plt.tight_layout()
@@ -137,8 +148,7 @@ class FitResultSeries:
 
     def plot_sld_profiles(self):
         """Plots the SLD profiles of the predicted parameters."""
-        generator = ReflectivityGenerator(self.q_values_prediction, self.sample)
-        profiles = generator.simulate_sld_profiles(self.predicted_parameters, progress_bar=False)
+        profiles = self.sld_profiles
 
         n_profiles = len(profiles)
         min_scan = self.predicted_parameters.index[0]
