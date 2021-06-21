@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.17.2] 2021-06-21
+
+### Fixed
+
+- Fixed error in the `FitResult` class where the original curve was not plotted in the same range as the predicted 
+  curve. 
+
 ## [0.17.1] 2021-06-10
 
 ### Added

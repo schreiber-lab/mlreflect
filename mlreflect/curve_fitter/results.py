@@ -51,8 +51,10 @@ class FitResult:
 
     def plot_prediction(self, parameters: list):
         """Plot the corrected data and the predicted reflectivity curve and print the predictions for `parameters`."""
-        min_q_idx = np.argmin(self.q_values_prediction)
-        max_q_idx = np.argmax(self.q_values_prediction)
+        min_q = np.min(self.q_values_prediction)
+        max_q = np.max(self.q_values_prediction)
+        min_q_idx = np.argmin(np.abs(self.q_values_input - min_q))
+        max_q_idx = np.argmin(np.abs(self.q_values_input - max_q))
 
         plt.semilogy(self.q_values_input[min_q_idx:max_q_idx],
                      self.corrected_reflectivity[min_q_idx:max_q_idx], 'o', label='data')
