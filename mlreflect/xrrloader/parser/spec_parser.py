@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 import numpy as np
 import pandas as pd
 
@@ -5,7 +7,8 @@ import pandas as pd
 class SpecParser:
     """Parse individual SPEC file scans on to Pandas DataFrames.
 
-    :param file_path: File path of the SPEC file.
+    Args:
+    file_path: File path of the SPEC file.
     """
 
     def __init__(self, file_path: str):
@@ -13,7 +16,7 @@ class SpecParser:
         with open(file_path) as file:
             self._file_lines = [line.rstrip() for line in file]
 
-        self._scan_index = {}
+        self._scan_index = OrderedDict()
         self._index_scans()
         print(f'{self.number_of_scans} scans found in {file_path}')
 

@@ -3,31 +3,27 @@ import numpy as np
 from .base_fitter import BaseFitter
 from .results import FitResult, FitResultSeries
 from ..models import DefaultTrainedModel
-from ..xrrloader import SpecLoader
+from ..xrrloader import FioLoader
 
 
-class SpecFitter(BaseFitter):
-    """Load reflectivity scans from a SPEC file and fit them using a trained neural network model.
-
-    Before use:
-        - A neural network model has to be set via the ``set_trained_model()`` method.
-        - Import parameters have to be defined via the ``set_import_params()`` method.
-        - Parameters for footprint correction have to be defined via ``set_footprint_params()`` method.
-        - The input SPEC file has to be specified via the ``set_spec_file()`` method.
-    """
+class FioFitter(BaseFitter):
 
     @property
-    def spec_file(self):
+    def file_stem(self):
         return self._file_name
 
-    def fit(self, scan_number: int, trim_front: int = None, trim_back: int = None, theta_offset: float = 0.0,
-            dq: float = 0.0, factor: float = 1.0, plot=False, polish=True) -> FitResult:
-        """Extract scan from SPEC file and predict thin film parameters.
+    def fit(self, scan_number: int, trim_front: int = None, trim_back: int = None, roi: list = None,
+            theta_offset: float = 0.0, dq: float = 0.0, factor: float = 1.0, plot=False, polish=True) -> FitResult:
+        """Extract scan from file and predict thin film parameters.
 
         Args:
-            scan_number: SPEC scan number of the scan that is to be fitted.
+            scan_number: Scan number of the scan that is to be fitted.
             trim_front: How many intensity points are cropped from the beginning.
             trim_back: How many intensity points are cropped from the end.
+            roi: Alternative region of interest in the raw detector image that will be converted to a
+                reflectivity curve. The roi specifications must be a list of integers that specify the pixel
+                boundaries in the format ``[left, bottom, right, top]``, e.g. ``roi=[241, 106, 247, 109]``.
+                This will override the default roi counter.
             theta_offset: Angular correction that is added before transformation to q space.
             dq: Q-shift that is applied before interpolation of the data to the trained q values. Can sometimes
                 improve the results if the total reflection edge is not perfectly aligned.
@@ -41,11 +37,11 @@ class SpecFitter(BaseFitter):
         Returns:
             FitResult
         """
-        self._reload_spec_loader()
+        self._reload_fio_loader()
         try:
-            scan = self._spec_loader.load_scan(scan_number=scan_number, trim_front=trim_front, trim_back=trim_back)
+            scan = self._loader.load_scan(scan_number=scan_number, trim_front=trim_front, trim_back=trim_back, roi=roi)
         except KeyError:
-            print(f'scan {scan_number} could not be found in {self._spec_file}')
+            print(f'scan {scan_number} could not be found in {self._file_name}')
             return
         scan.scattering_angle += theta_offset
         predicted_refl, predicted_parameters = self._curve_fitter.fit_curve(scan.corrected_intensity, scan.q,
@@ -69,7 +65,7 @@ class SpecFitter(BaseFitter):
     def fit_range(self, scan_range: range, trim_front: int = None, trim_back: int = None, theta_offset: float = 0.0,
                   dq: float = 0.0, factor: float = 1.0, plot=False, polish=True) -> FitResultSeries:
         """Iterate fit method over a range of scans."""
-        self._reload_spec_loader()
+        self._reload_fio_loader()
         fit_results = []
         for i in scan_range:
             fit_results.append(self.fit(i, trim_front=trim_front, trim_back=trim_back, theta_offset=theta_offset, dq=dq,
@@ -87,54 +83,54 @@ class SpecFitter(BaseFitter):
 
     def show_scans(self, min_scan: int = None, max_scan: int = None):
         """Show information about all scans from ``min_scan`` to ``max_scan``."""
-        self._reload_spec_loader()
-        parser = self._spec_loader.parser
+        self._reload_fio_loader()
+        scan_info = self._loader.parser.scan_info
         if max_scan is None:
-            max_scan = np.max(np.asarray(list(parser.scan_info.keys()), dtype=int))
+            max_scan = np.max(np.asarray(list(scan_info.keys()), dtype=int))
         else:
-            max_scan = np.min((max_scan, np.max(np.asarray(list(parser.scan_info.keys()), dtype=int))))
+            max_scan = np.min((max_scan, np.max(np.asarray(list(scan_info.keys()), dtype=int))))
         if min_scan is None:
-            min_scan = np.min(np.asarray(list(parser.scan_info.keys()), dtype=int))
+            min_scan = np.min(np.asarray(list(scan_info.keys()), dtype=int))
         else:
-            min_scan = np.max((min_scan, np.min(np.asarray(list(parser.scan_info.keys()), dtype=int))))
+            min_scan = np.max((min_scan, np.min(np.asarray(list(scan_info.keys()), dtype=int))))
         for i in range(min_scan, max_scan + 1):
             try:
                 out = f'scan #{i}\n' \
-                      f'\tcommand: {parser.scan_info[str(i)]["spec_command"]}\n' \
-                      f'\ttime: {parser.scan_info[str(i)]["time"]}'
+                      f'\tcommand: {scan_info[i]["header"]["scan_cmd"]}\n' \
+                      f'\tis_theta2theta_scan: {scan_info[i]["is_theta2theta_scan"]}'
                 print(out)
             except KeyError:
                 print(f'scan #{i}\n\tnot found')
 
-    def set_file(self, spec_file_path: str):
-        """Define the full path of the SPEC file from which the scans are read."""
-        self._spec_loader = SpecLoader(spec_file_path, **self._import_params, **self._footprint_params)
-        self._file_name = spec_file_path
+    def set_file(self, file_stem: str):
+        self._loader = FioLoader(file_stem, **self._import_params, **self._footprint_params)
+        self._file_name = file_stem
 
-    def set_import_params(self, angle_columns: list, intensity_column: str, attenuator_column: str = None,
-                          division_column: str = None):
-        """Set the parameters necessary to correctly import the scans from the SPEC file.
+    def set_import_params(self, scattering_angle_motor_name='tt', default_roi_name='p100k',
+                          attenuator_counter='atten_position',
+                          division_counter: str = None):
+        """Set the parameters necessary to correctly import the scans from the file.
 
         Args:
-            angle_columns: List of SPEC counters that are summed up to form the full scattering angle (2theta).
-            intensity_column: SPEC counter from which the intensity is extracted from.
-            attenuator_column: SPEC counter of the applied attenuator used to correct possible kinks in the data.
-            division_column: Optional SPEC counter that is used to divide the intensity counter by.
+            scattering_angle_motor_name: Name of the counter that contains half the scattering angle (default: ``'om'``).
+            default_roi_name: Counter name of the default region of interest that is extracted as reflectivity (default:
+                ``'p100k'``).
+            attenuator_counter: Counter of the applied attenuator used to correct possible kinks in the data.
+            division_counter: Optional counter that is used to divide the intensity counter by.
         """
         params = {
-            'angle_columns': angle_columns,
-            'intensity_column': intensity_column,
-            'attenuator_column': attenuator_column,
-            'division_column': division_column
+            'scattering_angle_motor_name': scattering_angle_motor_name,
+            'default_roi_name': default_roi_name,
+            'attenuator_counter': attenuator_counter,
+            'division_counter': division_counter
         }
         self._import_params.update(params)
 
-    def set_footprint_params(self, wavelength: float, sample_length: float, beam_width: float,
-                             beam_shape: str = 'gauss', normalize_to: str = 'max'):
+    def set_footprint_params(self, sample_length: float, beam_width: float, beam_shape: str = 'gauss',
+                             normalize_to: str = 'max'):
         """Set the parameters necessary to apply footprint correction.
 
         Args:
-            wavelength: Photon wavelength in Angstroms.
             sample_length: Sample length along the beam direction in mm.
             beam_width: Beam width along the beam direction (height). For a gaussian beam profile this is the full
                 width at half maximum.
@@ -147,7 +143,6 @@ class SpecFitter(BaseFitter):
         """
 
         params = {
-            'wavelength': wavelength,
             'beam_width': beam_width,
             'sample_length': sample_length,
             'beam_shape': beam_shape,
@@ -156,13 +151,11 @@ class SpecFitter(BaseFitter):
 
         self._footprint_params.update(params)
 
-    def _reload_spec_loader(self):
-        self._loader = SpecLoader(self._file_name, **self._import_params, **self._footprint_params)
+    def _reload_fio_loader(self):
+        self._loader = FioLoader(self._file_name, **self._import_params, **self._footprint_params)
 
 
-class DefaultSpecFitter(SpecFitter):
-    """:class:`SpecFitter` that is initialized with a pre-trained model for reflectivity on single-layer systems on
-    Si/SiOx."""
+class DefaultFioFitter(FioFitter):
 
     def __init__(self):
         super().__init__()

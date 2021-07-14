@@ -40,8 +40,8 @@ class CurveFitter:
                 improve the results if the total reflection edge is not perfectly aligned.
             factor: Multiplicative factor that is applied to the data after interpolation. Can sometimes
                 improve the results if the total reflection edge is not perfectly aligned.
-            polish: If `True`, the predictions will be refined with a simple least log mean squares minimization via
-                `scipy.optimize.minimize`. This can often improve the "fit" of the model curve to the data at the
+            polish: If ``True``, the predictions will be refined with a simple least log mean squares minimization via
+                ``scipy.optimize.minimize``. This can often improve the "fit" of the model curve to the data at the
                 expense of higher prediction times.
 
         Returns:
