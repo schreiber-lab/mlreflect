@@ -29,13 +29,13 @@ class TestFitResults(unittest.TestCase):
         cls.default_spec_fitter = DefaultSpecFitter()
         cls.default_spec_fitter.set_import_params(**import_params)
         cls.default_spec_fitter.set_footprint_params(**footprint_params)
-        cls.default_spec_fitter.set_spec_file(file_name)
+        cls.default_spec_fitter.set_file(file_name)
 
         cls.spec_fitter = SpecFitter()
         cls.spec_fitter.set_trained_model(DefaultTrainedModel())
         cls.spec_fitter.set_import_params(**import_params)
         cls.spec_fitter.set_footprint_params(**footprint_params)
-        cls.spec_fitter.set_spec_file(file_name)
+        cls.spec_fitter.set_file(file_name)
 
         cls.default_fitter_results = cls.default_spec_fitter.fit(18, trim_front=3, trim_back=3, plot=False,
                                                                  polish=False)
