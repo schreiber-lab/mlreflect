@@ -1,6 +1,27 @@
 # Changelog
 
+## [0.18.0] 2021-07-14
+
+### Added
+
+- Added support for *.fio* files in the form of a `FioParser`, `FioLoader` and `FioFitter`. The code has been 
+  refactored so that some functionality that is shared with the respective SPEC equivalents is inherited from a base
+  class.
+- Added a new subpackage `xrrloader.p08tools` that contains tools developed by Florian Bertram from DESY, Germany. 
+  These tools help in reading the '.fio' files and reprocessing the corresponding 2D detector images.
+- Added basic Sphinx docs to the project.
+
+### Changed
+
+- Updated some affected tests.
+- Updated several docstrings to use syntax markdown for docs.
+- Unified the version number from `setup.py` and `mlreflect.__init__` to `mlreflect.version`.
+
 ## [0.17.2] 2021-06-21
+
+### Added
+
+- Added SLD profile plotting to `FitResults` class.
 
 ### Fixed
 
