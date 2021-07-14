@@ -6,12 +6,7 @@
 
 mlreflect - Fast fitting of X-ray and neutron reflectivity data using AI
 ========================================================================
-
-What happens here?
-And now a list:
-
-* Item1
-* Item2
+This is the documentation of the mlreflect package.
 
 .. toctree::
    :maxdepth: 2
