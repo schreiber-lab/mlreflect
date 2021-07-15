@@ -1,6 +1,6 @@
 import numpy as np
 
-from .base_fitter import BaseFitter
+from .base_fitter import BaseFitter, reload_scans
 from .results import FitResult, FitResultSeries
 from ..models import DefaultTrainedModel
 from ..xrrloader import SpecLoader
@@ -20,8 +20,9 @@ class SpecFitter(BaseFitter):
     def spec_file(self):
         return self._file_name
 
+    @reload_scans
     def fit(self, scan_number: int, trim_front: int = None, trim_back: int = None, theta_offset: float = 0.0,
-            dq: float = 0.0, factor: float = 1.0, plot=False, polish=True) -> FitResult:
+            dq: float = 0.0, factor: float = 1.0, plot=False, polish=True, reload=True) -> FitResult:
         """Extract scan from SPEC file and predict thin film parameters.
 
         Args:
@@ -41,7 +42,7 @@ class SpecFitter(BaseFitter):
         Returns:
             FitResult
         """
-        self._reload_spec_loader()
+
         try:
             scan = self._spec_loader.load_scan(scan_number=scan_number, trim_front=trim_front, trim_back=trim_back)
         except KeyError:
@@ -66,10 +67,11 @@ class SpecFitter(BaseFitter):
             fit_result.plot_sld_profile()
         return fit_result
 
+    @reload_scans
     def fit_range(self, scan_range: range, trim_front: int = None, trim_back: int = None, theta_offset: float = 0.0,
-                  dq: float = 0.0, factor: float = 1.0, plot=False, polish=True) -> FitResultSeries:
+                  dq: float = 0.0, factor: float = 1.0, plot=False, polish=True, reload=True) -> FitResultSeries:
         """Iterate fit method over a range of scans."""
-        self._reload_spec_loader()
+
         fit_results = []
         for i in scan_range:
             fit_results.append(self.fit(i, trim_front=trim_front, trim_back=trim_back, theta_offset=theta_offset, dq=dq,
@@ -85,9 +87,10 @@ class SpecFitter(BaseFitter):
 
         return fit_result_series
 
-    def show_scans(self, min_scan: int = None, max_scan: int = None):
+    @reload_scans
+    def show_scans(self, min_scan: int = None, max_scan: int = None, reload=True):
         """Show information about all scans from ``min_scan`` to ``max_scan``."""
-        self._reload_spec_loader()
+
         parser = self._spec_loader.parser
         if max_scan is None:
             max_scan = np.max(np.asarray(list(parser.scan_info.keys()), dtype=int))
@@ -156,7 +159,7 @@ class SpecFitter(BaseFitter):
 
         self._footprint_params.update(params)
 
-    def _reload_spec_loader(self):
+    def _reload_loader(self):
         self._loader = SpecLoader(self._file_name, **self._import_params, **self._footprint_params)
 
 

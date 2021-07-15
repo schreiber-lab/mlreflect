@@ -1,6 +1,22 @@
+import functools
+
 from . import CurveFitter
 from .results import FitResult, FitResultSeries
 from ..models import TrainedModel
+
+
+def reload_scans(func):
+    """Reload scans at before calling the function if keyword ``reload=True`` is passed."""
+
+    @functools.wraps(func)
+    def reload_wrapper(self, *args, **kwargs):
+        if 'reload' in kwargs:
+            if kwargs['reload']:
+                self._reload_loader()
+            del kwargs['reload']
+        return func(self, *args, **kwargs)
+
+    return reload_wrapper
 
 
 class BaseFitter:
@@ -27,15 +43,18 @@ class BaseFitter:
     def footprint_params(self):
         return self._footprint_params
 
+    @reload_scans
     def fit(self, scan_number: int, trim_front: int = None, trim_back: int = None, theta_offset: float = 0.0,
-            dq: float = 0.0, factor: float = 1.0, plot=False, polish=True) -> FitResult:
+            dq: float = 0.0, factor: float = 1.0, plot=False, polish=True, reload=True) -> FitResult:
         raise NotImplementedError
 
+    @reload_scans
     def fit_range(self, scan_range: range, trim_front: int = None, trim_back: int = None, theta_offset: float = 0.0,
-                  dq: float = 0.0, factor: float = 1.0, plot=False, polish=True) -> FitResultSeries:
+                  dq: float = 0.0, factor: float = 1.0, plot=False, polish=True, reload=True) -> FitResultSeries:
         raise NotImplementedError
 
-    def show_scans(self, min_scan: int = None, max_scan: int = None):
+    @reload_scans
+    def show_scans(self, min_scan: int = None, max_scan: int = None, reload=True):
         """Show information about all scans from `min_scan` to `max_scan`."""
         raise NotImplementedError
 
@@ -61,4 +80,7 @@ class BaseFitter:
         raise NotImplementedError
 
     def set_footprint_params(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def _reload_loader(self):
         raise NotImplementedError
