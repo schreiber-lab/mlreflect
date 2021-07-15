@@ -17,7 +17,7 @@ class FioLoader(ReflectivityLoader):
         file_stem: The name of the experiment including the preceding folder structure. E.g. if you're experiment
             name is ``'my_data'`` and in the folder ``'user/data/'``, the file stem would be ``'user/data/my_data'``. This
             will look for all scans in the folder ``'user/data/'`` that begin with ``'my_data'``.
-        scattering_angle_motor_name: Name of the counter that contains the full scattering angle (default: ``'tt'``).
+        two_theta_counter: Name of the counter that contains the full scattering angle (default: ``'tt'``).
         default_roi_name: Counter name of the default region of interest that is extracted as reflectivity (default:
         ``'p100k'``).
         beam_width: Beam width for a rectangular approximation or FWHM of a Gaussian approximation in units of mm.
@@ -29,13 +29,13 @@ class FioLoader(ReflectivityLoader):
         division_counter: Optional name of a column that the intensity is divided by after attenuator correction.
     """
 
-    def __init__(self, file_stem: str, beam_width: float, sample_length: float, scattering_angle_motor_name='tt',
+    def __init__(self, file_stem: str, beam_width: float, sample_length: float, two_theta_counter='tt',
                  default_roi_name='p100k_roi1', beam_shape='gauss', normalize_to='max',
                  attenuator_counter='atten_position', division_counter=None):
         super().__init__(file_path=file_stem, beam_width=beam_width, sample_length=sample_length,
                          beam_shape=beam_shape, normalize_to=normalize_to)
 
-        self.scattering_angle_motor_name = scattering_angle_motor_name
+        self.two_theta_counter = two_theta_counter
         self.attenuator_counter = attenuator_counter
         self.division_counter = division_counter
         self.default_roi_name = default_roi_name
@@ -60,7 +60,7 @@ class FioLoader(ReflectivityLoader):
             raise ValueError(f'scan must be a theta-2theta (reflectivity) scan (is {scan.scan_cmd})')
 
         wavelength = 12380 / scan.motor_positions['energyfmb']
-        scattering_angle = np.array(scan.data[self.scattering_angle_motor_name])
+        scattering_angle = np.array(scan.data[self.two_theta_counter])
 
         if roi is None:
             intensity = scan.data[self.default_roi_name]

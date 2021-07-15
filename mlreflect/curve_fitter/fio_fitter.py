@@ -106,20 +106,20 @@ class FioFitter(BaseFitter):
         self._loader = FioLoader(file_stem, **self._import_params, **self._footprint_params)
         self._file_name = file_stem
 
-    def set_import_params(self, scattering_angle_motor_name='tt', default_roi_name='p100k',
+    def set_import_params(self, two_theta_counter='tt', default_roi_name='p100k',
                           attenuator_counter='atten_position',
                           division_counter: str = None):
         """Set the parameters necessary to correctly import the scans from the file.
 
         Args:
-            scattering_angle_motor_name: Name of the counter that contains half the scattering angle (default: ``'om'``).
+            two_theta_counter: Name of the counter that contains half the scattering angle (default: ``'om'``).
             default_roi_name: Counter name of the default region of interest that is extracted as reflectivity (default:
                 ``'p100k'``).
             attenuator_counter: Counter of the applied attenuator used to correct possible kinks in the data.
             division_counter: Optional counter that is used to divide the intensity counter by.
         """
         params = {
-            'scattering_angle_motor_name': scattering_angle_motor_name,
+            'two_theta_counter': two_theta_counter,
             'default_roi_name': default_roi_name,
             'attenuator_counter': attenuator_counter,
             'division_counter': division_counter
