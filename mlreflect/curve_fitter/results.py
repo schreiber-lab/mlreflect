@@ -5,6 +5,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib.ticker import MaxNLocator
 
 from ..data_generation import ReflectivityGenerator
 
@@ -15,7 +16,7 @@ class FitResult:
     def __init__(self, scan_number, corrected_reflectivity, q_values_input, predicted_reflectivity, q_values_prediction,
                  predicted_parameters, sample, timestamp: str = None):
         """A class to store prediction results in one object and allow easy plotting and saving of the results."""
-        self.scan_number = scan_number
+        self.scan_number = int(scan_number)
         self.timestamp = timestamp
         self.corrected_reflectivity = corrected_reflectivity
         self.q_values_input = q_values_input
@@ -103,8 +104,11 @@ class FitResultSeries:
 
     @property
     def delta_t(self):
-        datetime_list = [datetime.datetime.strptime(t, '%a %b %d %H:%M:%S %Y') for t in self.timestamp]
-        return np.array([(dt - datetime_list[0]).total_seconds() / 60 for dt in datetime_list])
+        if None in self.timestamp:
+            return None
+        else:
+            datetime_list = [datetime.datetime.strptime(t, '%a %b %d %H:%M:%S %Y') for t in self.timestamp]
+            return np.array([(dt - datetime_list[0]).total_seconds() / 60 for dt in datetime_list])
 
     @property
     def sld_profiles(self):
@@ -127,9 +131,23 @@ class FitResultSeries:
             save_path = os.path.join(os.path.dirname(path), f'scan{fit_result.scan_number}_{os.path.basename(path)}')
             fit_result.save_corrected_reflectivity(save_path)
 
-    def plot_predicted_parameter_range(self, parameters: list):
-        """Plot predicted parameters in `parameters` against time (relative to the first scan)."""
+    def plot_predicted_parameter_range(self, parameters: list, x_format='time'):
+        """Plot predicted parameters in `parameters` against scan number or time (relative to the first scan).
+        Args:
+            parameters: List of strings of which parameters are plotted. Possible values are ``'thickness'``,
+            ``'roughness'`` or ``'sld'``.
+            x_format: If ``x_format='time'`` (default), the x axis will be formatted using the timestamps of each scan.
+            If ``x_format='scan'``, the x axis will show the scan numbers instead. If no timestamps are available it
+            will always use ``'scan'``.
+
+        """
         n_labels = len(parameters)
+        if x_format == 'time' and self.delta_t is not None:
+            x = self.delta_t
+            x_label = 'Time [min]'
+        else:
+            x = self.scan_number
+            x_label = 'Scan'
 
         fig = plt.figure(figsize=(5, 10))
 
@@ -141,8 +159,11 @@ class FitResultSeries:
             else:
                 raise ValueError(f"couldn't determine unit for parameter {param} (must be thickness, roughness or sld)")
             plt.subplot(n_labels, 1, i + 1)
-            plt.plot(self.delta_t, self.predicted_parameters[param])
-            plt.xlabel('Time [min]')
+            plt.plot(x, self.predicted_parameters[param])
+            plt.xlabel(x_label)
+            if x_label == 'Scan':
+                ax = fig.gca()
+                ax.xaxis.set_major_locator(MaxNLocator(integer=True))
             plt.ylabel(f'{param} [{unit}]')
             plt.tight_layout()
 
