@@ -1,8 +1,18 @@
 import functools
+import inspect
 
 from . import CurveFitter
 from .results import FitResult, FitResultSeries
 from ..models import TrainedModel
+
+
+def get_default_kwargs(func):
+    signature = inspect.signature(func)
+    return {
+        key: value.default
+        for key, value in signature.parameters.items()
+        if value.default is not inspect.Parameter.empty
+    }
 
 
 def reload_scans(func):
@@ -10,10 +20,16 @@ def reload_scans(func):
 
     @functools.wraps(func)
     def reload_wrapper(self, *args, **kwargs):
+        default_kwargs = get_default_kwargs(func)
         if 'reload' in kwargs:
-            if kwargs['reload']:
-                self._reload_loader()
-            del kwargs['reload']
+            reload = kwargs['reload']
+        else:
+            if 'reload' in default_kwargs:
+                reload = default_kwargs['reload']
+            else:
+                reload = False
+        if reload:
+            self._reload_loader()
         return func(self, *args, **kwargs)
 
     return reload_wrapper
