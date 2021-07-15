@@ -7,3 +7,4 @@ numpy~=1.18.0
 typing~=3.7.4.1
 matplotlib~=3.3.4
 packaging~=20.9.0
+fabio~=0.11.0
