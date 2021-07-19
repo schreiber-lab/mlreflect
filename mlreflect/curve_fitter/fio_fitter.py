@@ -72,14 +72,17 @@ class FioFitter(BaseFitter):
         return fit_result
 
     @reload_scans
-    def fit_range(self, scan_range: range, trim_front: int = None, trim_back: int = None, theta_offset: float = 0.0,
-                  dq: float = 0.0, factor: float = 1.0, plot=False, polish=True, reload=True) -> FitResultSeries:
+    def fit_range(self, scan_range: range, trim_front: int = None, trim_back: int = None, roi: list = None,
+                  theta_offset: float = 0.0, dq: float = 0.0, factor: float = 1.0, plot=False, polish=True,
+                  reload=True) -> FitResultSeries:
         """Iterate fit method over a range of scans."""
 
         fit_results = []
         for i in scan_range:
-            fit_results.append(self.fit(i, trim_front=trim_front, trim_back=trim_back, theta_offset=theta_offset, dq=dq,
-                                        factor=factor, plot=False, polish=polish, reload=False))
+            result = self.fit(i, trim_front=trim_front, trim_back=trim_back, roi=roi, theta_offset=theta_offset, dq=dq,
+                              factor=factor, plot=False, polish=polish, reload=False)
+            if result is not None:
+                fit_results.append(result)
 
         fit_result_series = FitResultSeries(fit_results)
 
