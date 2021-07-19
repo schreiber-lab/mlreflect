@@ -6,7 +6,7 @@ from .scans import ReflectivityScan, ScanSeries
 
 
 class ReflectivityLoader:
-    """Aabstract class for loading reflectivity scans from various data sources."""
+    """Abstract class for loading reflectivity scans from various data sources."""
 
     def __init__(self, file_path: str, beam_width: float, sample_length: float, beam_shape='gauss', normalize_to='max'):
         self.parser = self._load_parser(file_path)
