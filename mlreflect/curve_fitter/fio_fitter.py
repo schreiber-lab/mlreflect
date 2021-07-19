@@ -3,7 +3,7 @@ import numpy as np
 from .base_fitter import BaseFitter, reload_scans
 from .results import FitResult, FitResultSeries
 from ..models import DefaultTrainedModel
-from ..xrrloader import FioLoader
+from ..xrrloader import FioLoader, NotReflectivityScanError
 
 
 class FioFitter(BaseFitter):
@@ -43,8 +43,13 @@ class FioFitter(BaseFitter):
         """
 
         try:
-            scan = self._loader.load_scan(scan_number=scan_number, trim_front=trim_front, trim_back=trim_back, roi=roi)
-        except KeyError:
+            try:
+                scan = self._loader.load_scan(scan_number=scan_number, trim_front=trim_front, trim_back=trim_back,
+                                              roi=roi)
+            except NotReflectivityScanError as e:
+                print(e)
+                return
+        except (KeyError, FileNotFoundError):
             print(f'scan {scan_number} could not be found in {self._file_name}')
             return
         scan.scattering_angle += theta_offset

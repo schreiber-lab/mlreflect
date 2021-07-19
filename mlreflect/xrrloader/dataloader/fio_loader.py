@@ -5,6 +5,7 @@ from numpy import ndarray
 
 from .reflectivity_loader import ReflectivityLoader
 from .scans import ReflectivityScan, ScanSeries
+from .exceptions import NotReflectivityScanError
 from ..p08tools import Scan as FioScan
 from ..p08tools import ScanAnalyzer
 from ..parser import FioParser
@@ -57,7 +58,8 @@ class FioLoader(ReflectivityLoader):
         """
         scan = self.parser.extract_scan(scan_number)
         if not scan.is_theta2theta_scan:
-            raise ValueError(f'scan must be a theta-2theta (reflectivity) scan (is {scan.scan_cmd})')
+            raise NotReflectivityScanError(
+                f'must be a theta-2theta/reflectivity scan (scan {scan_number} is "{scan.scan_cmd}")')
 
         wavelength = 12380 / scan.motor_positions['energyfmb']
         scattering_angle = np.array(scan.data[self.two_theta_counter])
@@ -87,7 +89,10 @@ class FioLoader(ReflectivityLoader):
         """Read several reflectivity scans and return them in a ``ScanSeries`` object."""
         scans = ScanSeries()
         for scan_number in scan_numbers:
-            scans.append(self.load_scan(scan_number, trim_front, trim_back, roi))
+            try:
+                scans.append(self.load_scan(scan_number, trim_front, trim_back, roi))
+            except NotReflectivityScanError:
+                pass
         return scans
 
     @staticmethod

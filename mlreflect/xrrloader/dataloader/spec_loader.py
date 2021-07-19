@@ -2,8 +2,9 @@ from typing import Iterator
 
 import numpy as np
 
-from .scans import ReflectivityScan, ScanSeries
+from .exceptions import NotReflectivityScanError
 from .reflectivity_loader import ReflectivityLoader
+from .scans import ReflectivityScan, ScanSeries
 from ..parser import SpecParser
 
 
@@ -48,7 +49,9 @@ class SpecLoader(ReflectivityLoader):
         """Read reflectivity scan from SPEC file, trim it and return it in a :class:`ReflectivityScan` object."""
         scan = self.parser.extract_scan(scan_number)
         if not self._contains_counters(scan.columns):
-            raise ValueError(f'scan counters must contain motor names {self.angle_columns}')
+            raise NotReflectivityScanError(
+                f'scan counters must contain motor names {self.angle_columns} '
+                f'(scan {scan_number} is "{scan.scan_cmd}")')
 
         scan_time = self.parser.scan_info[str(scan_number)]['time']
         angles = np.array([np.array(abs(scan[column_name])) for column_name in self.angle_columns])
@@ -75,7 +78,10 @@ class SpecLoader(ReflectivityLoader):
         """Read several reflectivity scans from SPEC file, trim them and return them in a ScanSeries object."""
         scans = ScanSeries()
         for scan_number in scan_numbers:
-            scans.append(self.load_scan(scan_number, trim_front, trim_back))
+            try:
+                scans.append(self.load_scan(scan_number, trim_front, trim_back))
+            except NotReflectivityScanError:
+                pass
         return scans
 
     def _contains_counters(self, counter_list):
