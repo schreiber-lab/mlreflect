@@ -22,7 +22,7 @@ class FioParser:
         self._two_theta_name = two_theta_name
 
         self.file_stem = Path(file_stem)
-        print(f'{self.number_of_scans} scans for {str(self.file_stem)}')
+        print(f'found {self.number_of_scans} scans for {str(self.file_stem)}')
 
     @property
     def scan_info(self):
