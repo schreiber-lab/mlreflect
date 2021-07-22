@@ -73,7 +73,7 @@ class CurveFitter:
                 restored_predicted_parameters.append(best_q_output['best_prediction'])
                 predicted_refl[i] = best_q_output['best_predicted_curve']
                 best_q_shift[i] = best_q_output['best_shift']
-            restored_predicted_parameters = pd.concat(restored_predicted_parameters)
+            restored_predicted_parameters = pd.concat(restored_predicted_parameters).reset_index(drop=True)
         else:
             best_q_shift = None
             predicted_parameters = self.trained_model.keras_model.predict(
