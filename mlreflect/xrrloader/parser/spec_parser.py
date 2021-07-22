@@ -12,7 +12,7 @@ class SpecParser:
     """
 
     def __init__(self, file_path: str):
-        self._file_path = file_path
+        self.file_path = file_path
         with open(file_path) as file:
             self._file_lines = [line.rstrip() for line in file]
 
@@ -29,18 +29,18 @@ class SpecParser:
         return len(self._scan_index)
 
     def extract_scan(self, scan_number):
-        """Extract scan of a given number into a table in the form of a Pandas DataFrame."""
+        """Extract scan of a given number into a table in the form of a Pandas :class:`DataFrame`."""
         column_names = self._extract_column_names(scan_number)
         data = self._extract_scan_data(scan_number)
         return pd.DataFrame(data=data, columns=column_names)
 
     def _extract_column_names(self, scan_number):
-        header_idx = self._scan_index[str(scan_number)]['data_start_line']
+        header_idx = self._scan_index[int(scan_number)]['data_start_line']
         column_names = self._file_lines[header_idx].lstrip('#L ').split('  ')
         return column_names
 
     def _extract_scan_data(self, scan_number):
-        data_idx = self._scan_index[str(scan_number)]['data_start_line'] + 1
+        data_idx = self._scan_index[int(scan_number)]['data_start_line'] + 1
         data = []
         while True:
             try:
@@ -91,5 +91,5 @@ class SpecParser:
                 scan['scan_end_line'] = index - 1
                 break
             index += 1
-        self._scan_index[scan_number] = scan
+        self._scan_index[int(scan_number)] = scan
         self._index_scans(scan['scan_end_line'] + 1)

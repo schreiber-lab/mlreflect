@@ -43,7 +43,7 @@ class FioLoader(ReflectivityLoader):
 
     def load_scan(self, scan_number: int, trim_front: int = None, trim_back: int = None,
                   roi: list = None, detector_name='p100k') -> ReflectivityScan:
-        """Read .fio files and associated detector images, trim it and return it in a ReflectivityScan object.
+        """Read .fio files and associated detector images, trim it and return it in a :class:`ReflectivityScan` object.
 
             Args:
                 scan_number: Number of the scan to extract.
@@ -55,6 +55,8 @@ class FioLoader(ReflectivityLoader):
                     boundaries in the format ``[left, bottom, right, top]``, e.g. ``roi=[241, 106, 247, 109]``.
                     This will override the default roi counter.
                 detector_name: Name of the detector from which the roi is extracted.
+
+            Returns: :class:`ReflectivityScan`
         """
         scan = self.parser.extract_scan(scan_number)
         if not scan.is_theta2theta_scan:

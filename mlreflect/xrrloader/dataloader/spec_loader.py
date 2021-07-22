@@ -47,13 +47,17 @@ class SpecLoader(ReflectivityLoader):
 
     def load_scan(self, scan_number: int, trim_front: int = None, trim_back: int = None) -> ReflectivityScan:
         """Read reflectivity scan from SPEC file, trim it and return it in a :class:`ReflectivityScan` object."""
-        scan = self.parser.extract_scan(scan_number)
+        try:
+            scan = self.parser.extract_scan(scan_number)
+        except (KeyError, ValueError):
+            raise NotReflectivityScanError(f'scan {scan_number} could not be found in {self.parser.file_path}')
+
         if not self._contains_counters(scan.columns):
             raise NotReflectivityScanError(
                 f'scan counters must contain motor names {self.angle_columns} '
-                f'(scan {scan_number} is "{scan.scan_cmd}")')
+                f'(scan {scan_number} is "{self.parser.scan_info[scan_number]["spec_command"]}")')
 
-        scan_time = self.parser.scan_info[str(scan_number)]['time']
+        scan_time = self.parser.scan_info[scan_number]['time']
         angles = np.array([np.array(abs(scan[column_name])) for column_name in self.angle_columns])
         scattering_angle = np.sum(np.atleast_2d(angles), axis=0)
         intensity = np.array(scan[self.intensity_column])
@@ -75,7 +79,7 @@ class SpecLoader(ReflectivityLoader):
                                 timestamp=scan_time)
 
     def load_scans(self, scan_numbers: Iterator, trim_front: int = None, trim_back: int = None) -> ScanSeries:
-        """Read several reflectivity scans from SPEC file, trim them and return them in a ScanSeries object."""
+        """Read several reflectivity scans from SPEC file, trim them and return them in a :class:`ScanSeries` object."""
         scans = ScanSeries()
         for scan_number in scan_numbers:
             try:

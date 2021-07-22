@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from matplotlib.ticker import MaxNLocator
 
+from .minimizer import mean_squared_error
 from ..data_generation import ReflectivityGenerator
 
 
@@ -14,7 +15,7 @@ class FitResult:
     FORMAT = '%.5e'
 
     def __init__(self, scan_number, corrected_reflectivity, q_values_input, predicted_reflectivity, q_values_prediction,
-                 predicted_parameters, sample, timestamp: str = None):
+                 predicted_parameters, best_q_shift, sample, timestamp: str = None):
         """A class to store prediction results in one object and allow easy plotting and saving of the results."""
         self.scan_number = int(scan_number)
         self.timestamp = timestamp
@@ -25,12 +26,22 @@ class FitResult:
         predicted_parameters.index = [scan_number]
         predicted_parameters.index.name = 'scan'
         self.predicted_parameters = predicted_parameters
+        self.best_q_shift = best_q_shift
         self.sample = sample
 
     @property
     def sld_profile(self):
         generator = ReflectivityGenerator(self.q_values_prediction, self.sample)
         return generator.simulate_sld_profiles(self.predicted_parameters, progress_bar=False)[0]
+
+    @property
+    def interpolated_corrected_reflectivity(self):
+        return np.interp(self.q_values_prediction, self.q_values_input, self.corrected_reflectivity)
+
+    @property
+    def curve_mse(self):
+        return mean_squared_error(np.log10(self.predicted_reflectivity),
+                                  np.log10(self.interpolated_corrected_reflectivity)).round(decimals=6)[0]
 
     def save_predicted_parameters(self, path: str, delimiter='\t'):
         """Save all predicted parameters in a text file with the given delimiter."""
@@ -65,6 +76,11 @@ class FitResult:
         plt.ylabel('Intensity [a.u.]')
         plt.legend()
 
+        self._annotate_plot(parameters)
+
+        plt.show()
+
+    def _annotate_plot(self, parameters):
         predictions = ''
         for param in parameters:
             if 'thickness' in param or 'roughness' in param:
@@ -74,9 +90,9 @@ class FitResult:
             else:
                 raise ValueError(f"couldn't determine unit for parameter {param} (must be thickness, roughness or sld)")
             predictions += f'{param}: {float(self.predicted_parameters[param]):0.1f} {unit}\n'
-        plt.annotate(predictions, (0.6, 0.75), xycoords='axes fraction', va='top', ha='left')
 
-        plt.show()
+        predictions += f'log_mse: {self.curve_mse}'
+        plt.annotate(predictions, (0.6, 0.75), xycoords='axes fraction', va='top', ha='left')
 
     def plot_sld_profile(self):
         """Plots the SLD profile of the predicted parameters."""
@@ -100,6 +116,7 @@ class FitResultSeries:
         self.q_values_prediction = np.array([fit_result.q_values_prediction for fit_result in fit_results_list])
         self.predicted_parameters = pd.concat(
             [fit_result.predicted_parameters for fit_result in fit_results_list])
+        self.best_q_shift = np.array([fit_result.best_q_shift for fit_result in self.fit_results_list])
         self.sample = fit_results_list[0].sample
 
     @property
@@ -109,6 +126,10 @@ class FitResultSeries:
         else:
             datetime_list = [datetime.datetime.strptime(t, '%a %b %d %H:%M:%S %Y') for t in self.timestamp]
             return np.array([(dt - datetime_list[0]).total_seconds() / 60 for dt in datetime_list])
+
+    @property
+    def curve_mse(self):
+        return np.array([fit_result.curve_variant_log_mse for fit_result in self.fit_results_list])
 
     @property
     def sld_profiles(self):

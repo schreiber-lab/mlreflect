@@ -12,8 +12,8 @@ class FioParser:
 
     Args:
         file_stem: The name of the experiment including the preceding folder structure. E.g. if you're experiment
-            name is ``'my_data'`` and in the folder ``'user/data/'``, the file stem would be ``'user/data/my_data'``. This
-            will look for all scans in the folder ``'user/data/'`` that begin with ``'my_data'``.
+            name is ``'my_data'`` and in the folder ``'user/data/'``, the file stem would be ``'user/data/my_data'``.
+            This will look for all scans in the folder ``'user/data/'`` that begin with ``'my_data'``.
         theta_name: Name of the counter that contains half the scattering angle (default: ``'om'``).
         two_theta_name: Name of the counter that contains the full scattering angle (default: ``'tt'``).
     """

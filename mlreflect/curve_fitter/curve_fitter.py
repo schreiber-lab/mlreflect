@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from numpy import ndarray
 
-from .minimizer import least_log_mean_squares_fit
+from .minimizer import least_log_mean_squares_fit, q_shift_variants, curve_variant_log_mse
 from ..data_generation import ReflectivityGenerator
 from ..models import TrainedModel
 from ..training import InputPreprocessor, OutputPreprocessor
@@ -14,7 +14,7 @@ class CurveFitter:
     """Make a prediction on specular reflectivity data based on the trained model.
 
     Args:
-        trained_model: TrainedModel object that contains the trained Keras model, the trained q values, the
+        trained_model: :class:`TrainedModel` object that contains the trained Keras model, the trained q values, the
             standardization values and the sample structure.
     """
 
@@ -29,7 +29,8 @@ class CurveFitter:
 
         self.op = OutputPreprocessor(trained_model.sample, 'min_to_zero')
 
-    def fit_curve(self, corrected_curve: ndarray, q_values: ndarray, dq: float = 0, factor: float = 1, polish=False):
+    def fit_curve(self, corrected_curve: ndarray, q_values: ndarray, dq: float = 0, factor: float = 1, polish=False,
+                  fraction_bounds=(0.5, 0.5, 0.1), optimize_q=True, n_q_samples=1000):
         """Return predicted reflectivity and thin film properties based footprint-corrected data.
 
         Args:
@@ -43,32 +44,75 @@ class CurveFitter:
             polish: If ``True``, the predictions will be refined with a simple least log mean squares minimization via
                 ``scipy.optimize.minimize``. This can often improve the "fit" of the model curve to the data at the
                 expense of higher prediction times.
+            fraction_bounds: The relative fitting bounds if the LMS for thickness, roughness and SLD, respectively.
+                E.g. if the predicted thickness was 150 A, then a value of 0.5 would mean the fit bounds are
+                ``(75, 225)``.
+            optimize_q: If ``True``, the q interpolation will be resampled with small q shifts in a range of about
+                +-0.003 1/A and the neural network prediction with the smallest MSE will be selected. If
+                ``polish=True``, this step will happen before the LMS fit.
+            n_q_samples: Number of q shift samples that will be generated. More samples can lead to a better result,
+                but will increase the prediction time.
 
         Returns:
-            predicted_reflectivity: Numpy array of the predicted intensity.
-            predicted_parameters: Pandas DataFrame of the predicted thin film parameters.
+            :class:`dict`: A dictionary containing the fit results:
+                ``'predicted_reflectivity'``: Numpy :class:`ndarray` of the predicted intensity.
+                ``'predicted_parameters'``: Pandas :class:`DataFrame` of the predicted thin film parameters.
+                ``'best_shift'``: Q shift that lead to the prediction with the lowest MSE. Is ``None``
+                    if ``_optimize_q=False``.
         """
-        corrected_curve = self._interpolate_intensity(corrected_curve * factor, q_values + dq)
+        corrected_curve = np.atleast_2d(corrected_curve)
+        interpolated_curve = self._interpolate_intensity(corrected_curve * factor, q_values + dq)
 
-        predicted_parameters = self.trained_model.keras_model.predict(
-            self.ip.standardize(np.atleast_2d(corrected_curve)))
+        n_curves = len(corrected_curve)
+        if optimize_q:
+            restored_predicted_parameters = []
+            predicted_refl = np.empty(interpolated_curve.shape)
+            best_q_shift = np.empty(n_curves)
+            for i, curve in enumerate(corrected_curve):
+                best_q_output = self._optimize_q(self.trained_model.q_values, q_values, curve, n_q_samples)
+                restored_predicted_parameters.append(best_q_output['best_prediction'])
+                predicted_refl[i] = best_q_output['best_predicted_curve']
+                best_q_shift[i] = best_q_output['best_shift']
+            restored_predicted_parameters = pd.concat(restored_predicted_parameters)
+        else:
+            best_q_shift = None
+            predicted_parameters = self.trained_model.keras_model.predict(
+                self.ip.standardize(np.atleast_2d(interpolated_curve)))
 
-        restored_predicted_parameters = self.op.restore_labels(predicted_parameters)
-        self._ensure_positive_parameters(restored_predicted_parameters)
+            restored_predicted_parameters = self.op.restore_labels(predicted_parameters)
+            self._ensure_positive_parameters(restored_predicted_parameters)
 
         if polish:
             polished_parameters = []
-            for i in range(len(corrected_curve)):
-                polished_parameters.append(least_log_mean_squares_fit(corrected_curve[i],
-                                                                      restored_predicted_parameters[i:(i+1)],
-                                                                      self.generator, self.op))
+            for i in range(len(interpolated_curve)):
+                polished_parameters.append(least_log_mean_squares_fit(interpolated_curve[i],
+                                                                      restored_predicted_parameters[i:(i + 1)],
+                                                                      self.generator, self.op, fraction_bounds))
             polished_parameters = pd.concat(polished_parameters).reset_index(drop=True)
             self._ensure_positive_parameters(polished_parameters)
             predicted_refl = self.generator.simulate_reflectivity(polished_parameters, progress_bar=False)
-            return predicted_refl, polished_parameters
+            return {'predicted_reflectivity': predicted_refl, 'predicted_parameters': polished_parameters,
+                    'best_q_shift': best_q_shift}
         else:
             predicted_refl = self.generator.simulate_reflectivity(restored_predicted_parameters, progress_bar=False)
-            return predicted_refl, restored_predicted_parameters
+            return {'predicted_reflectivity': predicted_refl, 'predicted_parameters': restored_predicted_parameters,
+                    'best_q_shift': best_q_shift}
+
+    def _optimize_q(self, q_values_prediction, q_values_input, corrected_reflectivity, n_variants=300, scale=0.001):
+        q_shift_curves, shifts = q_shift_variants(q_values_prediction, q_values_input, corrected_reflectivity,
+                                                  n_variants, scale=scale)
+
+        shift_predictions = self.fit_curve(q_shift_curves, q_values_prediction, polish=False, optimize_q=False)
+
+        interpolated_reflectivity = self._interpolate_intensity(corrected_reflectivity, q_values_input)
+
+        shift_mse = curve_variant_log_mse(interpolated_reflectivity, shift_predictions['predicted_reflectivity'])
+
+        min_mse_idx = shift_mse.argmin()
+
+        return {'best_shift': shifts[min_mse_idx][0],
+                'best_prediction': shift_predictions['predicted_parameters'][min_mse_idx:min_mse_idx + 1],
+                'best_predicted_curve': shift_predictions['predicted_reflectivity'][min_mse_idx]}
 
     def _interpolate_intensity(self, intensity: ndarray, q_values: ndarray):
         warnings.filterwarnings('ignore')

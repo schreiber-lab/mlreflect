@@ -1,3 +1,5 @@
+from typing import Iterable
+
 import numpy as np
 
 from .base_fitter import BaseFitter, reload_scans
@@ -22,7 +24,9 @@ class SpecFitter(BaseFitter):
 
     @reload_scans
     def fit(self, scan_number: int, trim_front: int = None, trim_back: int = None, theta_offset: float = 0.0,
-            dq: float = 0.0, factor: float = 1.0, plot=False, polish=True, reload=True) -> FitResult:
+            dq: float = 0.0, factor: float = 1.0, plot=False, polish=True, fraction_bounds=(0.5, 0.5, 0.1),
+            optimize_q=True, n_q_samples=1000, reload=True) -> FitResult:
+
         """Extract scan from SPEC file and predict thin film parameters.
 
         Args:
@@ -38,9 +42,20 @@ class SpecFitter(BaseFitter):
             polish: If ``True``, the predictions will be refined with a simple least log mean squares minimization via
                 ``scipy.optimize.minimize``. This can often improve the "fit" of the model curve to the data at the
                 expense of higher prediction times.
+            fraction_bounds: The relative fitting bounds if the LMS for thickness, roughness and SLD, respectively.
+                E.g. if the predicted thickness was 150 A, then a value of 0.5 would mean the fit bounds are
+                ``(75, 225)``.
+            optimize_q: If ``True``, the q interpolation will be resampled with small q shifts in a range of about
+                +-0.003 1/A and the neural network prediction with the smallest MSE will be selected. If
+                ``polish=True``, this step will happen before the LMS fit.
+            n_q_samples: Number of q shift samples that will be generated. More samples can lead to a better result,
+                but will increase the prediction time.
+            reload: Decide whether or not to reload all scans in the directory before extracting the data for the fit
+                (default ``True``). Depending on the number of scans, this can take some time.
 
         Returns:
-            FitResult
+            :class:`FitResult`: An object that contains the fit results as well as useful methods to plot and save
+                the results.
         """
 
         try:
@@ -49,16 +64,25 @@ class SpecFitter(BaseFitter):
             print(f'scan {scan_number} could not be found in {self._spec_file}')
             return
         scan.scattering_angle += theta_offset
-        predicted_refl, predicted_parameters = self._curve_fitter.fit_curve(scan.corrected_intensity, scan.q,
-                                                                            dq, factor, polish)
+        fit_output = self._curve_fitter.fit_curve(corrected_curve=scan.corrected_intensity, q_values=scan.q, dq=dq,
+                                                  factor=factor, polish=polish, fraction_bounds=fraction_bounds,
+                                                  optimize_q=optimize_q, n_q_samples=n_q_samples)
+
+        predicted_refl = fit_output['predicted_reflectivity'][0]
+        predicted_parameters = fit_output['predicted_parameters']
+        if fit_output['best_q_shift'] is None:
+            best_q_shift = None
+        else:
+            best_q_shift = fit_output['best_q_shift'][0]
 
         fit_result = FitResult(scan_number=scan_number,
                                timestamp=scan.timestamp,
                                corrected_reflectivity=scan.corrected_intensity,
                                q_values_input=scan.q,
-                               predicted_reflectivity=predicted_refl[0],
+                               predicted_reflectivity=predicted_refl,
                                q_values_prediction=self._trained_model.q_values - dq,
                                predicted_parameters=predicted_parameters,
+                               best_q_shift=best_q_shift,
                                sample=self._trained_model.sample)
         if plot:
             parameters = [self.trained_model.sample.layers[-1].name + param for param in ('_thickness', '_roughness',
@@ -68,14 +92,39 @@ class SpecFitter(BaseFitter):
         return fit_result
 
     @reload_scans
-    def fit_range(self, scan_range: range, trim_front: int = None, trim_back: int = None, theta_offset: float = 0.0,
-                  dq: float = 0.0, factor: float = 1.0, plot=False, polish=True, reload=True) -> FitResultSeries:
+    def fit_range(self, scan_range: Iterable, trim_front: int = None, trim_back: int = None, theta_offset: float = 0.0,
+                  dq: float = 0.0, factor: float = 1.0, plot=False, polish=True, fraction_bounds=(0.5, 0.5, 0.1),
+                  optimize_q=True, n_q_samples=1000, reload=True) -> FitResultSeries:
         """Iterate fit method over a range of scans."""
 
+        scans = self._spec_loader.load_scans(scan_numbers=scan_range, trim_front=trim_front, trim_back=trim_back)
+
         fit_results = []
-        for i in scan_range:
-            fit_results.append(self.fit(i, trim_front=trim_front, trim_back=trim_back, theta_offset=theta_offset, dq=dq,
-                                        factor=factor, plot=False, polish=polish))
+        for scan in scans:
+            scan.scattering_angle += theta_offset
+            fit_output = self._curve_fitter.fit_curve(corrected_curve=scan.corrected_intensity, q_values=scan.q, dq=dq,
+                                                      factor=factor, polish=polish, fraction_bounds=fraction_bounds,
+                                                      optimize_q=optimize_q, n_q_samples=n_q_samples)
+
+            predicted_refl = fit_output['predicted_reflectivity'][0]
+            predicted_parameters = fit_output['predicted_parameters']
+            if fit_output['best_q_shift'] is None:
+                best_q_shift = None
+            else:
+                best_q_shift = fit_output['best_q_shift'][0]
+
+            fit_result = FitResult(scan_number=scan.scan_number,
+                                   timestamp=scan.timestamp,
+                                   corrected_reflectivity=scan.corrected_intensity,
+                                   q_values_input=scan.q,
+                                   predicted_reflectivity=predicted_refl,
+                                   q_values_prediction=self._trained_model.q_values - dq,
+                                   predicted_parameters=predicted_parameters,
+                                   best_q_shift=best_q_shift,
+                                   sample=self._trained_model.sample)
+
+            if fit_result is not None:
+                fit_results.append(fit_result)
 
         fit_result_series = FitResultSeries(fit_results)
 
@@ -103,8 +152,8 @@ class SpecFitter(BaseFitter):
         for i in range(min_scan, max_scan + 1):
             try:
                 out = f'scan #{i}\n' \
-                      f'\tcommand: {parser.scan_info[str(i)]["spec_command"]}\n' \
-                      f'\ttime: {parser.scan_info[str(i)]["time"]}'
+                      f'\tcommand: {parser.scan_info[i]["spec_command"]}\n' \
+                      f'\ttime: {parser.scan_info[i]["time"]}'
                 print(out)
             except KeyError:
                 print(f'scan #{i}\n\tnot found')

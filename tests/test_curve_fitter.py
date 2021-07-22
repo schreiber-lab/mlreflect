@@ -23,7 +23,9 @@ class TestCurveFitterMethods(unittest.TestCase):
 
     def test_fit_curve(self):
         curve_fitter = CurveFitter(self.trained_model)
-        pred_refl, labels = curve_fitter.fit_curve(self.reflectivity, self.q)
+        fit_output = curve_fitter.fit_curve(self.reflectivity, self.q)
+        pred_refl = fit_output['predicted_reflectivity']
+        labels = fit_output['predicted_parameters']
         self.assertIsInstance(pred_refl[0], ndarray)
         self.assertIsInstance(labels, DataFrame)
 
