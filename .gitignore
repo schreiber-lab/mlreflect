@@ -1,5 +1,6 @@
 .idea/
 data/notebooks/.ipynb_checkpoints/*
+/docs/source/.ipynb_checkpoints/
 mlreflect/__pycache__/
 build/
 dist/
