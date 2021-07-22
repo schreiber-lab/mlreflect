@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.19.0] 2021-07-22
+
+### Added
+
+- Added new optimization method where the _q_ interpolation is sampled with small shifts in _q_ (around +-0.003 1/A).
+  This option is turned on with the keyword `optimize_q=True` and generally improves the prediction.
+- The relative fitting bounds for the LMS fit (when `polish=True`) can now be chosen for each of the three 
+  prediction parameters (thickness, roughness, SLD) via the keyword `fraction_bounds`.
+- Added log mean squared error to the `FitResult` object and the plot of the prediction.
+- Added a lot more docstrings
+
+### Changed
+
+- The output of the `CurveFitter.fit_curve()` method has been changed from a tuple (containing reflectivity and 
+  parameters) to a dictionary (now also including the best q shift if `optimize_q=True`).
+- The scan number index of the `SpecParser.scan_info` dictionary was changed from `str` to `int` for consistency.
+- Updated example notebooks
+- Changed example SPEC file
+- Updated documentation
+
 ## [0.18.0] 2021-07-14
 
 ### Added
