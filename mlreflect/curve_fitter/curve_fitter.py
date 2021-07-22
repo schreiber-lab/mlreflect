@@ -58,7 +58,7 @@ class CurveFitter:
                 ``'predicted_reflectivity'``: Numpy :class:`ndarray` of the predicted intensity.
                 ``'predicted_parameters'``: Pandas :class:`DataFrame` of the predicted thin film parameters.
                 ``'best_shift'``: Q shift that lead to the prediction with the lowest MSE. Is ``None``
-                    if ``_optimize_q=False``.
+                if ``optimize_q=False``.
         """
         corrected_curve = np.atleast_2d(corrected_curve)
         interpolated_curve = self._interpolate_intensity(corrected_curve * factor, q_values + dq)
