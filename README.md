@@ -26,6 +26,8 @@ _example/notebooks/training_example.ipynb_ Jupyter notebook.
 An example of how to use the default pre-trained model for single layers on Si/SiOx substrates to fit data directly 
 from a SPEC file is shown in _examples/notebooks/spec_usage_example.ipynb_ Jupyter notebook.
 
+A detailed explanation as well as API info can be found in the documentation.
+
 ## Authors
 #### Main author
 - Alessandro Greco <alessandro.greco@uni-tuebingen.de> (Institut für Angewandte Physik, University of Tübingen)
