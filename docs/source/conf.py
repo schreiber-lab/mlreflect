@@ -44,6 +44,8 @@ nbsphinx_custom_formats = {
     '.md': ['jupytext.reads', {'fmt': 'Rmd'}],
 }
 
+root_doc = 'source/index'
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
