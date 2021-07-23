@@ -8,10 +8,6 @@ version: 2
 sphinx:
   configuration: docs/conf.py
 
-formats:
-  - pdf
-  - html
-
 python:
   version: 3.7
   install:
