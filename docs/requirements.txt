@@ -5,4 +5,7 @@ sphinx-rtd-theme
 pandoc
 numpydoc
 nbconvert
+sphinxcontrib-bibtex
+sphinxcontrib-svg2pdfconverter
+sphinx-copybutton
 

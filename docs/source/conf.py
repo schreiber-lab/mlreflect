@@ -37,7 +37,10 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
     'sphinx.ext.mathjax',
-    'sphinx.ext.viewcode'
+    'sphinx.ext.viewcode',
+    'sphinx_copybutton',
+    'sphinxcontrib.bibtex',
+    'sphinxcontrib.rsvgconverter'
 ]
 
 nbsphinx_custom_formats = {
@@ -54,7 +57,8 @@ templates_path = ['_templates']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = []
+# Exclude build directory and Jupyter backup files:
+exclude_patterns = ['_build', '**.ipynb_checkpoints']
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -87,8 +91,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 'mlreflect.tex', u'mlreflect Documentation',
-   u'Alessandro Greco', 'manual'),
+  ('index', 'mlreflect.tex', 'mlreflect Documentation',
+   author, 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
