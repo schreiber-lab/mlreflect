@@ -3,5 +3,6 @@ jupyter-sphinx
 nbsphinx
 sphinx-rtd-theme
 pandoc
+numpydoc
 nbconvert
 
