@@ -1,0 +1,7 @@
+jupyter
+jupyter-sphinx
+nbsphinx
+sphinx-rtd-theme
+pandoc
+nbconvert
+
