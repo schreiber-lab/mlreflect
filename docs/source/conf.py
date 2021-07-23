@@ -95,6 +95,9 @@ latex_documents = [
    author, 'manual'),
 ]
 
+bibtex_bibfiles = []
+bibtex_encoding = 'utf8'
+
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
 #latex_logo = None
