@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.optimize import minimize
+from scipy.optimize import curve_fit
 
 from ..data_generation import interp_reflectivity, ReflectivityGenerator
 
@@ -20,13 +20,26 @@ def curve_variant_log_mse(curve, variant_curves):
     return np.mean(errors ** 2, axis=1)
 
 
-def least_log_mean_squares_fit(data, predicted_labels, generator, output_preprocessor, fraction_bounds=(0.5, 0.5, 0.1)):
+def least_log_mean_squares_fit(q_values, data, predicted_labels, sample, output_preprocessor,
+                               fraction_bounds=(0.5, 0.5, 0.1)):
     """Fits the data with a model curve with ``scipy.optimize.minimize`` using ``predicted_labels`` as start values."""
     prep_labels = output_preprocessor.apply_preprocessing(predicted_labels)[0]
     start_values = np.array(prep_labels)[0]
-    bounds = [(val - bound * abs(val), val + bound * abs(val)) for val, bound in zip(start_values, fraction_bounds)]
-    fit_params = minimize(log_mse_loss, start_values, args=(data, generator, output_preprocessor), bounds=bounds)
-    return output_preprocessor.restore_labels(np.atleast_2d(fit_params.x))
+    bounds = ([val - bound * abs(val) for val, bound in zip(start_values, fraction_bounds)],
+              [val + bound * abs(val) for val, bound in zip(start_values, fraction_bounds)])
+    fit_result = curve_fit(fitting_model(q_values, sample, output_preprocessor), q_values, np.log10(data),
+                           p0=start_values, bounds=bounds)
+    return output_preprocessor.restore_labels(np.atleast_2d(fit_result[0]))
+
+
+def fitting_model(q_values, sample, output_preprocessor):
+    def log_refl_curve(q, *prep_labels):
+        generator = ReflectivityGenerator(q_values, sample)
+        restored_labels = output_preprocessor.restore_labels(np.atleast_2d(prep_labels))
+        model = generator.simulate_reflectivity(restored_labels, progress_bar=False)[0]
+        return np.log10(model)
+
+    return log_refl_curve
 
 
 def log_mse_loss(prep_labels, data, generator, output_preprocessor):

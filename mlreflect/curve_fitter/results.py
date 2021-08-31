@@ -41,7 +41,7 @@ class FitResult:
     @property
     def curve_mse(self):
         return mean_squared_error(np.log10(self.predicted_reflectivity),
-                                  np.log10(self.interpolated_corrected_reflectivity)).round(decimals=6)[0]
+                                  np.log10(self.corrected_reflectivity)).round(decimals=6)[0]
 
     def save_predicted_parameters(self, path: str, delimiter='\t'):
         """Save all predicted parameters in a text file with the given delimiter."""
@@ -49,8 +49,8 @@ class FitResult:
 
     def save_predicted_reflectivity(self, path: str):
         """Save the predicted reflectivity in a text file with the first column being the q values."""
-        output = np.zeros((len(self.q_values_prediction), 2))
-        output[:, 0] = self.q_values_prediction
+        output = np.zeros((len(self.q_values_input), 2))
+        output[:, 0] = self.q_values_input
         output[:, 1] = self.predicted_reflectivity
         np.savetxt(path, output, delimiter='\t', fmt=self.FORMAT)
 
@@ -63,14 +63,10 @@ class FitResult:
 
     def plot_prediction(self, parameters: list):
         """Plot the corrected data and the predicted reflectivity curve and print the predictions for ``parameters``."""
-        min_q = np.min(self.q_values_prediction)
-        max_q = np.max(self.q_values_prediction)
-        min_q_idx = np.argmin(np.abs(self.q_values_input - min_q))
-        max_q_idx = np.argmin(np.abs(self.q_values_input - max_q))
 
-        plt.semilogy(self.q_values_input[min_q_idx:max_q_idx],
-                     self.corrected_reflectivity[min_q_idx:max_q_idx], 'o', label='data')
-        plt.semilogy(self.q_values_prediction, self.predicted_reflectivity, label='prediction')
+        plt.semilogy(self.q_values_input,
+                     self.corrected_reflectivity, 'o', label='data')
+        plt.semilogy(self.q_values_input, self.predicted_reflectivity, label='prediction')
         plt.title(f'Prediction of scan #{self.scan_number} ({self.timestamp})')
         plt.xlabel('q [1/A]')
         plt.ylabel('Intensity [a.u.]')

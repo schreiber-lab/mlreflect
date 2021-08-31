@@ -62,6 +62,7 @@ class CurveFitter:
         """
         corrected_curve = np.atleast_2d(corrected_curve)
         interpolated_curve = self._interpolate_intensity(corrected_curve * factor, q_values + dq)
+        generator = ReflectivityGenerator(q_values, self.trained_model.sample)
 
         n_curves = len(corrected_curve)
         if optimize_q:
@@ -85,16 +86,16 @@ class CurveFitter:
         if polish:
             polished_parameters = []
             for i in range(len(interpolated_curve)):
-                polished_parameters.append(least_log_mean_squares_fit(interpolated_curve[i],
+                polished_parameters.append(least_log_mean_squares_fit(q_values, corrected_curve[i],
                                                                       restored_predicted_parameters[i:(i + 1)],
-                                                                      self.generator, self.op, fraction_bounds))
+                                                                      self.generator.sample, self.op, fraction_bounds))
             polished_parameters = pd.concat(polished_parameters).reset_index(drop=True)
             self._ensure_positive_parameters(polished_parameters)
-            predicted_refl = self.generator.simulate_reflectivity(polished_parameters, progress_bar=False)
+            predicted_refl = generator.simulate_reflectivity(polished_parameters, progress_bar=False)
             return {'predicted_reflectivity': predicted_refl, 'predicted_parameters': polished_parameters,
                     'best_q_shift': best_q_shift}
         else:
-            predicted_refl = self.generator.simulate_reflectivity(restored_predicted_parameters, progress_bar=False)
+            predicted_refl = generator.simulate_reflectivity(restored_predicted_parameters, progress_bar=False)
             return {'predicted_reflectivity': predicted_refl, 'predicted_parameters': restored_predicted_parameters,
                     'best_q_shift': best_q_shift}
 
