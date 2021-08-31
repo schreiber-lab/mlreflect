@@ -29,8 +29,7 @@ class TestCurveFitterMethods(unittest.TestCase):
         self.assertIsInstance(pred_refl[0], ndarray)
         self.assertIsInstance(labels, DataFrame)
 
-        model_q = self.trained_model.q_values
-        self.assertEqual(len(model_q), len(pred_refl[0]))
+        self.assertEqual(len(self.q), len(pred_refl[0]))
 
 
 if __name__ == '__main__':

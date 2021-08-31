@@ -1,10 +1,7 @@
 import unittest
 
 from mlreflect.curve_fitter import DefaultSpecFitter, SpecFitter
-from mlreflect.data_generation import MultilayerStructure
 from mlreflect.models import DefaultTrainedModel
-from numpy import ndarray
-from pandas import DataFrame
 
 
 class TestCurveFitterMethods(unittest.TestCase):
@@ -44,14 +41,12 @@ class TestCurveFitterMethods(unittest.TestCase):
         self.default_spec_fitter.fit(18, trim_front=3, trim_back=3, plot=False, polish=True)
         self.spec_fitter.fit(18, trim_front=3, trim_back=3, plot=False, polish=True)
 
-        self.default_spec_fitter.fit(18, trim_front=None, trim_back=None, plot=False, polish=True)
-        self.spec_fitter.fit(18, trim_front=None, trim_back=None, plot=False, polish=True)
+        self.default_spec_fitter.fit(18, trim_front=3, trim_back=None, plot=False, polish=True)
+        self.spec_fitter.fit(18, trim_front=3, trim_back=None, plot=False, polish=True)
 
     def test_fit_range(self):
         self.default_spec_fitter.fit_range(range(20, 22), trim_front=5, plot=False, polish=False)
         self.spec_fitter.fit_range(range(20, 22), trim_front=5, plot=False, polish=False)
-
-
 
 
 if __name__ == '__main__':

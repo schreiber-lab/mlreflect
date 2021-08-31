@@ -67,7 +67,7 @@ class TestFitResults(unittest.TestCase):
         self.assertEqual(len(fit_results.q_values_input), 44)
         self.assertEqual(len(fit_results.corrected_reflectivity), 44)
         self.assertEqual(len(fit_results.q_values_prediction), 109)
-        self.assertEqual(len(fit_results.predicted_reflectivity), 109)
+        self.assertEqual(len(fit_results.predicted_reflectivity), 44)
 
         self.assertIsInstance(fit_results.predicted_parameters, DataFrame)
         self.assertIsInstance(fit_results.sample, MultilayerStructure)
@@ -118,10 +118,10 @@ class TestFitResults(unittest.TestCase):
         data1 = np.loadtxt(file_name1)
         data2 = np.loadtxt(file_name2)
 
-        np.testing.assert_almost_equal(data1[:, 0], self.default_fitter_results.q_values_prediction, decimal=4)
+        np.testing.assert_almost_equal(data1[:, 0], self.default_fitter_results.q_values_input, decimal=4)
         np.testing.assert_almost_equal(data1[:, 1], self.default_fitter_results.predicted_reflectivity, decimal=4)
 
-        np.testing.assert_almost_equal(data2[:, 0], self.spec_fitter_results.q_values_prediction, decimal=4)
+        np.testing.assert_almost_equal(data2[:, 0], self.spec_fitter_results.q_values_input, decimal=4)
         np.testing.assert_almost_equal(data2[:, 1], self.spec_fitter_results.predicted_reflectivity, decimal=4)
 
     def test_save_predicted_parameters(self):
@@ -171,10 +171,10 @@ class TestFitResults(unittest.TestCase):
             data1 = np.loadtxt(scan_name1)
             data2 = np.loadtxt(scan_name2)
 
-            np.testing.assert_almost_equal(data1[:, 0], default_results.q_values_prediction, decimal=4)
+            np.testing.assert_almost_equal(data1[:, 0], default_results.q_values_input, decimal=4)
             np.testing.assert_almost_equal(data1[:, 1], default_results.predicted_reflectivity, decimal=4)
 
-            np.testing.assert_almost_equal(data2[:, 0], results.q_values_prediction, decimal=4)
+            np.testing.assert_almost_equal(data2[:, 0], results.q_values_input, decimal=4)
             np.testing.assert_almost_equal(data2[:, 1], results.predicted_reflectivity, decimal=4)
 
     def test_save_predicted_parameters_range(self):
