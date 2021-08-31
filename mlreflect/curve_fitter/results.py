@@ -36,7 +36,7 @@ class FitResult:
 
     @property
     def interpolated_corrected_reflectivity(self):
-        return np.interp(self.q_values_prediction, self.q_values_input, self.corrected_reflectivity)
+        return 10 ** np.interp(self.q_values_prediction, self.q_values_input, np.log10(self.corrected_reflectivity))
 
     @property
     def curve_mse(self):

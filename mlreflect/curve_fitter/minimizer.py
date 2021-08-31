@@ -8,7 +8,7 @@ def q_shift_variants(q_values_prediction, q_values_input, corrected_reflectivity
 
     interpolated_curves = np.zeros((n_variants, len(q_values_prediction)))
     for i in range(n_variants):
-        interpolated_curves[i] = np.interp(q_values_prediction, shifted_qs[i], corrected_reflectivity, )
+        interpolated_curves[i] = 10 ** np.interp(q_values_prediction, shifted_qs[i], np.log10(corrected_reflectivity))
     return interpolated_curves, shift
 
 
