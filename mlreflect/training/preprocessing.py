@@ -130,7 +130,7 @@ class OutputPreprocessor:
         """Removes all constant labels and applies normalization to the non-constant labels.
 
         Args:
-            labels: Pandas DataFrame or ndarray of randomly generated labels.
+            labels: Pandas :class:`DataFrame` or ndarray of randomly generated labels.
 
         Returns:
             normalized_labels: DataFrame
@@ -138,16 +138,16 @@ class OutputPreprocessor:
         """
         label_df = convert_to_dataframe(labels, self.all_label_names)
 
-        preprocessed_labels = self._remove_labels(label_df.copy())
-        preprocessed_labels = self._normalize_labels(preprocessed_labels)
+        preprocessed_labels = self.remove_labels(label_df)
+        preprocessed_labels = self.normalize_labels(preprocessed_labels)
 
         removed_labels_df = label_df[[param.name for param in self.constant_labels]]
 
         return preprocessed_labels, removed_labels_df
 
-    def _normalize_labels(self, label_df: DataFrame) -> DataFrame:
-        """Normalizes all constant labels and returns normalized DataFrame."""
-
+    def normalize_labels(self, label_df: DataFrame) -> DataFrame:
+        """Normalizes all constant labels and returns normalized :class:`DataFrame`."""
+        label_df = label_df.copy()
         for parameter in self.all_label_parameters:
             if not isinstance(parameter, ConstantParameter):
                 if self.normalization is 'min_to_zero':
@@ -157,9 +157,9 @@ class OutputPreprocessor:
                     label_df[parameter.name] = label_df[parameter.name] / np.abs(parameter.max)
         return label_df
 
-    def _remove_labels(self, label_df: DataFrame) -> DataFrame:
-        """Removes labels in `constant_labels` from `label_df` and returns DataFrame."""
-
+    def remove_labels(self, label_df: DataFrame) -> DataFrame:
+        """Removes labels in ``constant_labels`` from ``label_df`` and returns :class:`DataFrame`."""
+        label_df = label_df.copy()
         for param in self.constant_labels:
             if param.name not in label_df.columns:
                 warn(f'Label "{param.name}" not in the list of labels (maybe already removed). Skipping "'
@@ -173,14 +173,14 @@ class OutputPreprocessor:
 
         predicted_labels_df = convert_to_dataframe(predicted_labels, [param.name for param in self.used_labels])
 
-        restored_labels_df = self._renormalize_labels(predicted_labels_df)
-        restored_labels_df = self._add_constant_labels(restored_labels_df)
+        restored_labels_df = self.renormalize_labels(predicted_labels_df)
+        restored_labels_df = self.add_constant_labels(restored_labels_df)
 
         return restored_labels_df[self.all_label_names]
 
-    def _renormalize_labels(self, label_df: DataFrame) -> DataFrame:
+    def renormalize_labels(self, label_df: DataFrame) -> DataFrame:
         """Removes normalization from all labels in ``label_df``."""
-
+        label_df = label_df.copy()
         for param in self.used_labels:
             if isinstance(param, Parameter) and not isinstance(param, ConstantParameter):
                 if self.normalization is 'min_to_zero':
@@ -189,8 +189,9 @@ class OutputPreprocessor:
                     label_df[param.name] = label_df[param.name] * np.abs(param.max)
         return label_df
 
-    def _add_constant_labels(self, predicted_labels_df: DataFrame) -> DataFrame:
+    def add_constant_labels(self, predicted_labels_df: DataFrame) -> DataFrame:
         """Adds all labels in ``constant_labels`` to ``predicted_labels_df``."""
+        predicted_labels_df = predicted_labels_df.copy()
         for param in self.constant_labels:
             predicted_labels_df[param.name] = param.value
         return predicted_labels_df
