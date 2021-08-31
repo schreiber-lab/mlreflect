@@ -6,6 +6,7 @@ from numpy import ndarray
 
 from ..footprint import apply_footprint_correction
 from ..footprint import normalize_to_first, normalize_to_max
+from ...data_generation import interp_reflectivity
 
 
 class ReflectivityScan:
@@ -77,7 +78,7 @@ class ReflectivityScan:
 
     def get_interpolated_intensity(self, new_q: ndarray):
         """Interpolate log10 values of the corrected intensity to new values `new_q`."""
-        return 10 ** (np.interp(new_q, self.q, np.log10(self.corrected_intensity)))
+        return interp_reflectivity(new_q, self.q, self.corrected_intensity)
 
     def plot_raw_intensity(self, q_min: float = None, q_max: float = None):
         """Plot raw intensity within given q range."""

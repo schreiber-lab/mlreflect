@@ -1,6 +1,8 @@
 import numpy as np
 from scipy.optimize import minimize
 
+from ..data_generation import interp_reflectivity, ReflectivityGenerator
+
 
 def q_shift_variants(q_values_prediction, q_values_input, corrected_reflectivity, n_variants, scale=0.001):
     shift = np.random.normal(loc=0, size=n_variants, scale=scale).reshape(n_variants, 1)
@@ -8,7 +10,7 @@ def q_shift_variants(q_values_prediction, q_values_input, corrected_reflectivity
 
     interpolated_curves = np.zeros((n_variants, len(q_values_prediction)))
     for i in range(n_variants):
-        interpolated_curves[i] = 10 ** np.interp(q_values_prediction, shifted_qs[i], np.log10(corrected_reflectivity))
+        interpolated_curves[i] = interp_reflectivity(q_values_prediction, shifted_qs[i], corrected_reflectivity)
     return interpolated_curves, shift
 
 

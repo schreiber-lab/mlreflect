@@ -5,7 +5,7 @@ import pandas as pd
 from numpy import ndarray
 
 from .minimizer import least_log_mean_squares_fit, q_shift_variants, curve_variant_log_mse
-from ..data_generation import ReflectivityGenerator
+from ..data_generation import ReflectivityGenerator, interp_reflectivity
 from ..models import TrainedModel
 from ..training import InputPreprocessor, OutputPreprocessor
 
@@ -119,7 +119,7 @@ class CurveFitter:
         intensity = np.atleast_2d(intensity)
         interp_intensity = np.empty((len(intensity), len(self.trained_model.q_values)))
         for i in range(len(intensity)):
-            interp_intensity[i] = 10 ** np.interp(self.trained_model.q_values, q_values, np.log10(intensity[i]))
+            interp_intensity[i] = interp_reflectivity(self.trained_model.q_values, q_values, intensity[i])
         return interp_intensity
 
     @staticmethod
