@@ -47,13 +47,13 @@ class TrainedModel:
         self._ip_mean = ip_mean
         self._ip_std = ip_std
 
-    def from_file(self, file_name: str):
+    def from_file(self, file_name: str, **kwargs):
         """Populates the TrainedModel container with data saved in the given .h5 file.
 
         Args:
             file_name: Full path to the .h5 file that contains the saved data.
         """
-        self._keras_model = models.load_model(file_name)
+        self._keras_model = models.load_model(file_name, **kwargs)
         sample = MultilayerStructure()
         with h5py.File(file_name, 'r') as model_file:
             sample_dict = json.loads(model_file['prediction_params/sample'][()])
