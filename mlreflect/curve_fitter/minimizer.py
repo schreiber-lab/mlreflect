@@ -22,7 +22,7 @@ def curve_variant_log_mse(curve, variant_curves):
 
 def least_log_mean_squares_fit(q_values, data, predicted_labels, sample, output_preprocessor,
                                fraction_bounds=(0.5, 0.5, 0.1)):
-    """Fits the data with a model curve with ``scipy.optimize.minimize`` using ``predicted_labels`` as start values."""
+    """Fits the data with a model curve with ``scipy.optimize.curve_fit`` using ``predicted_labels`` as start values."""
     prep_labels = output_preprocessor.apply_preprocessing(predicted_labels)[0]
     start_values = np.array(prep_labels)[0]
     bounds = ([val - bound * abs(val) for val, bound in zip(start_values, fraction_bounds)],
