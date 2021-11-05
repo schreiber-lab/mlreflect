@@ -11,6 +11,10 @@ In case the newest version is not available on PyPI, the package can also be ins
 
 `pip install mlreflect/`
 
+## Online documentation
+
+Documentation and API reference can be found online on https://mlreflect.readthedocs.io/en/latest/
+
 ## Usage example
 The package can then be imported in python using
 
