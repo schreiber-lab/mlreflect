@@ -30,7 +30,7 @@ class CurveFitter:
         self.op = OutputPreprocessor(trained_model.sample, 'min_to_zero')
 
     def fit_curve(self, corrected_curve: ndarray, q_values: ndarray, dq: float = 0, factor: float = 1, polish=False,
-                  fraction_bounds=(0.5, 0.5, 0.1), optimize_q=True, n_q_samples=1000):
+                  fraction_bounds=(0.5, 0.5, 0.1), optimize_q=True, n_q_samples=1000, simulate_reflectivity=True):
         """Return predicted reflectivity and thin film properties based footprint-corrected data.
 
         Args:
@@ -52,6 +52,8 @@ class CurveFitter:
                 ``polish=True``, this step will happen before the LMS fit.
             n_q_samples: Number of q shift samples that will be generated. More samples can lead to a better result,
                 but will increase the prediction time.
+            simulate_reflectivity: If ``True`` (default), the reflectivity according to the predicted parameter
+                values will be simulated as well. This might slow down the prediction times.
 
         Returns:
             :class:`dict`: A dictionary containing the fit results:
@@ -91,11 +93,17 @@ class CurveFitter:
                                                                       self.generator.sample, self.op, fraction_bounds))
             polished_parameters = pd.concat(polished_parameters).reset_index(drop=True)
             self._ensure_positive_parameters(polished_parameters)
-            predicted_refl = generator.simulate_reflectivity(polished_parameters, progress_bar=False)
+            if simulate_reflectivity:
+                predicted_refl = generator.simulate_reflectivity(polished_parameters, progress_bar=False)
+            else:
+                predicted_refl = None
             return {'predicted_reflectivity': predicted_refl, 'predicted_parameters': polished_parameters,
                     'best_q_shift': best_q_shift}
         else:
-            predicted_refl = generator.simulate_reflectivity(restored_predicted_parameters, progress_bar=False)
+            if simulate_reflectivity:
+                predicted_refl = generator.simulate_reflectivity(restored_predicted_parameters, progress_bar=False)
+            else:
+                predicted_refl = None
             return {'predicted_reflectivity': predicted_refl, 'predicted_parameters': restored_predicted_parameters,
                     'best_q_shift': best_q_shift}
 
