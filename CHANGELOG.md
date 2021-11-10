@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.20.0] 2021-11-10
+
+### Added
+
+- Added more docstrings
+- Added `simulate_reflectivity` flag for the `CurveFitter.fit_curve()` method that allows the skipping of 
+  reflectivity simulation if prediction speed is of importance.
+- Added `**kwargs` as an argument for the `TrainedModel` class that is passed directly to the method which loads the 
+  Keras method to allow the loading of custom objects.
+
+### Changed
+
+- Replaced `scipy.optimize.minimize` with `scipy.optimize.curve_fit` because it's faster for least mean squares 
+  minimization
+- Changed docs to be compatible with Read the Docs. Now the docs can be found online (https://mlreflect.readthedocs.
+  io/en/latest/).
+- Updated tests.
+- Refactored reflectivity interpolation to be all in one place
+- Changed license from GPL-3 to MIT
+
+### Fixed
+
+- Fixed bug in minimizer interpolation
+
 ## [0.19.0] 2021-07-22
 
 ### Added
