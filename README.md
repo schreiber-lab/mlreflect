@@ -1,6 +1,7 @@
 # mlreflect
 
-Fast fitting of reflectivity curves using machine learning.
+_mlreflect_ is a Python package for training and using artificial neural networks to analyze specular X-ray and 
+neutron reflectivity data. The training and usage of the neural network models is done via Keras as an API for TensorFlow. 
 
 ## Installation
 The mlreflect package can be installed directly from the command line using the python package manager pip:
