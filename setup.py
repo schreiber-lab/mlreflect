@@ -1,4 +1,3 @@
-import os
 from distutils.util import convert_path
 
 from setuptools import setup, find_packages
@@ -10,10 +9,8 @@ with open(convert_path('mlreflect/version.py')) as ver_file:
 with open('requirements.txt') as file:
     requirements = file.readlines()
 
-
-def read(file_name):
-    return open(os.path.join(os.path.dirname(__file__), file_name)).read()
-
+with open('README.md') as file:
+    README = file.read()
 
 setup(
     name='mlreflect',
@@ -21,7 +18,8 @@ setup(
                 'specular X-ray and neutron reflectivity data. The training and usage of the neural network models is '
                 'done via Keras as an API for TensorFlow.',
     version=main_ns['__version__'],
-    long_description=read('README.md'),
+    long_description=README,
+    long_description_content_type='text/markdown',
     author='Alessandro Greco',
     author_email='alessandro.greco@uni-tuebingen.de',
     license='MIT',
