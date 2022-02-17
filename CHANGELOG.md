@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.21.0] 2022-02-17
+
+### Added
+
+- Added the option in the `CurveFitter` and `SpecFitter` classes to resample the curve scaling at prediction to find 
+  the one with the lowest MSE (analogous to the q shift resampling). The option can be turned on by passing the 
+  `optimize_scaling=True` keyword to the fit methods.
+
+## [0.20.2] 2021-11-10
+
+### Added
+
+- Added readme description to `setup.py` for PyPI.
+
 ## [0.20.0] 2021-11-10
 
 ### Added

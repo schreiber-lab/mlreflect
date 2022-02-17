@@ -5,6 +5,7 @@ from ..data_generation import interp_reflectivity, ReflectivityGenerator
 
 
 def q_shift_variants(q_values_prediction, q_values_input, corrected_reflectivity, n_variants, scale=0.001):
+    """Create ``n_variants`` interpolated reflectivity curve variants with randomly distributed q shifts."""
     shift = np.random.normal(loc=0, size=n_variants, scale=scale).reshape(n_variants, 1)
     shifted_qs = np.tile(q_values_input, (n_variants, 1)) + shift
 
@@ -12,6 +13,15 @@ def q_shift_variants(q_values_prediction, q_values_input, corrected_reflectivity
     for i in range(n_variants):
         interpolated_curves[i] = interp_reflectivity(q_values_prediction, shifted_qs[i], corrected_reflectivity)
     return interpolated_curves, shift
+
+
+def curve_scaling_variants(corrected_reflectivity, n_variants, scale=0.1):
+    """Create ``n_variants`` reflectivity curve variants with randomly distributed scaling factors."""
+    scalings = np.random.normal(loc=1, size=n_variants, scale=scale).reshape(n_variants, 1)
+    scaled_curves = np.zeros((n_variants, len(corrected_reflectivity)))
+    for i in range(n_variants):
+        scaled_curves[i] = corrected_reflectivity.copy() * scalings[i]
+    return scaled_curves, scalings
 
 
 def curve_variant_log_mse(curve, variant_curves):

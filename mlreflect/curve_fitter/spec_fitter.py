@@ -24,8 +24,9 @@ class SpecFitter(BaseFitter):
 
     @reload_scans
     def fit(self, scan_number: int, trim_front: int = None, trim_back: int = None, theta_offset: float = 0.0,
-            dq: float = 0.0, factor: float = 1.0, plot=False, polish=True, fraction_bounds=(0.5, 0.5, 0.1),
-            optimize_q=True, n_q_samples=1000, reload=True) -> FitResult:
+            dq: float = 0.0, factor: float = 1.0, plot=False, polish=True, fraction_bounds: tuple = (0.5, 0.5, 0.1),
+            optimize_q=True, n_q_samples: int = 1000, optimize_scaling=False, n_scale_samples: int = 300,
+            reload=True) -> FitResult:
 
         """Extract scan from SPEC file and predict thin film parameters.
 
@@ -50,6 +51,12 @@ class SpecFitter(BaseFitter):
                 ``polish=True``, this step will happen before the LMS fit.
             n_q_samples: Number of q shift samples that will be generated. More samples can lead to a better result,
                 but will increase the prediction time.
+            optimize_scaling: If ``True``, the interpolated input curve is randomly rescaled by a factor between 0.9
+                and 1.1 and the neural network prediction with the smallest MSE will be selected. If ``polish=True``,
+                this step will happen before the LMS fit. If ``optimize_q=True``, this will step will happen after
+                the q shift optimization.
+            n_scale_samples: Number of curve scaling samples that will be generated. More samples can lead to a better
+                result, but will increase the prediction time.
             reload: Decide whether or not to reload all scans in the directory before extracting the data for the fit
                 (default ``True``). Depending on the number of scans, this can take some time.
 
@@ -66,7 +73,8 @@ class SpecFitter(BaseFitter):
         scan.scattering_angle += theta_offset
         fit_output = self._curve_fitter.fit_curve(corrected_curve=scan.corrected_intensity, q_values=scan.q, dq=dq,
                                                   factor=factor, polish=polish, fraction_bounds=fraction_bounds,
-                                                  optimize_q=optimize_q, n_q_samples=n_q_samples)
+                                                  optimize_q=optimize_q, n_q_samples=n_q_samples,
+                                                  optimize_scaling=optimize_scaling, n_scale_samples=n_scale_samples)
 
         predicted_refl = fit_output['predicted_reflectivity'][0]
         predicted_parameters = fit_output['predicted_parameters']
