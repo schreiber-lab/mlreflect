@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.21.1] 2022-05-09
+
+### Fixed
+
+- Fixed a bug in `MultilayerReflectivity()` of the `data_generation.reflectivity` module where the 
+  wrong square root solution of the `np.sqrt()` function was chosen when calculating wave vectors below the critical 
+  angle.
+
+### Added
+
+- Added a basic test `test_builtin_reflectivity.py`. 
+- Added the GitHub workflow `.github/workflows/publish-to-pypi.yml`. It publishes a new version of *mlreflect* to 
+  PyPI automatically whenever a tagged commit is pushed. The tag has to follow the version pattern 'x.y.z'.
+
 ## [0.21.0] 2022-02-17
 
 ### Added
